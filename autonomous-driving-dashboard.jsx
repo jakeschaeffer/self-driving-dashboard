@@ -224,7 +224,7 @@ function NinesScale() {
 
           var labelOffsets = [24, 72, 120, 168]; // px below dot per stagger row
           var maxOffset = labelOffsets[numRows - 1];
-          var chartHeight = dotY + maxOffset + 52 + 24; // dot area + deepest label + text height + threshold stagger
+          var chartHeight = dotY + maxOffset + 52 + 12; // dot area + deepest label + text height + threshold stagger
 
           return (
             <div style={{
@@ -268,7 +268,7 @@ function NinesScale() {
                   return (
                     <div key={t.nines} style={{
                       position: "absolute", left: pct(t.nines) + "%", top: dotY - 6 + "px",
-                      width: "0px", height: chartHeight - dotY + thresholdStagger[ti] + "px",
+                      width: "0px", height: maxOffset + 52 + thresholdStagger[ti] + "px",
                       borderLeft: "1px dashed " + t.color, opacity: 0.3,
                     }}>
                       <div style={{
