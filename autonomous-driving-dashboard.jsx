@@ -188,36 +188,50 @@ function NinesScale() {
       {/* Progress chart — dot plot */}
       <Section title="Progress toward autonomous driving" subtitle="Each system plotted on the nines scale — dashed lines mark key thresholds.">
         {(function() {
-          var padLeft = 32;
-          var padRight = 20;
-          var dotY = 40;
-          var minGapPx = 90; // min horizontal px between labels before staggering
+          var chartW = 960; // fixed inner width in px
+          var dotY = 36;
+          var labelW = 100; // label column width for overlap calc
+          var numRows = 4;
 
-          // Assign stagger rows to avoid label overlap
+          // Assign stagger rows: track last used x per row, pick first non-overlapping row
           var points = sorted.map(function(d) {
             return { nines: d.nines, label: d.label, sublabel: d.sublabel, color: d.color, row: 0 };
           });
-          // Walk left to right, push labels down when they'd overlap
-          for (var i = 1; i < points.length; i++) {
-            var prevPct = (points[i - 1].nines / scaleMax) * 100;
-            var curPct = (points[i].nines / scaleMax) * 100;
-            // approximate: 1% ≈ ~7px on a 700px-wide chart
-            if ((curPct - prevPct) < (minGapPx / 7)) {
-              points[i].row = (points[i - 1].row + 1) % 3;
-            } else {
-              points[i].row = 0;
+          var lastXByRow = [];
+          for (var r = 0; r < numRows; r++) lastXByRow.push(-Infinity);
+          for (var i = 0; i < points.length; i++) {
+            var xPx = (points[i].nines / scaleMax) * chartW;
+            var placed = false;
+            for (var row = 0; row < numRows; row++) {
+              if (xPx - lastXByRow[row] >= labelW) {
+                points[i].row = row;
+                lastXByRow[row] = xPx;
+                placed = true;
+                break;
+              }
+            }
+            if (!placed) {
+              // fallback: pick row with largest gap
+              var bestRow = 0; var bestGap = -Infinity;
+              for (var row = 0; row < numRows; row++) {
+                var gap = xPx - lastXByRow[row];
+                if (gap > bestGap) { bestGap = gap; bestRow = row; }
+              }
+              points[i].row = bestRow;
+              lastXByRow[bestRow] = xPx;
             }
           }
 
-          var labelOffsets = [22, 60, 98]; // px below dot for each stagger row
-          var chartHeight = 40 + 98 + 50; // top space + max label offset + label text height
+          var labelOffsets = [24, 72, 120, 168]; // px below dot per stagger row
+          var maxOffset = labelOffsets[numRows - 1];
+          var chartHeight = dotY + maxOffset + 52; // dot area + deepest label + text height
 
           return (
             <div style={{
               background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: "10px", padding: "20px 20px 16px", overflow: "hidden",
+              borderRadius: "10px", padding: "20px 0 16px", overflowX: "auto", WebkitOverflowScrolling: "touch",
             }}>
-              <div style={{ position: "relative", height: chartHeight + "px", margin: "0 " + padRight + "px 0 " + padLeft + "px" }}>
+              <div style={{ position: "relative", height: chartHeight + "px", minWidth: chartW + "px", margin: "0 28px" }}>
                 {/* Axis line */}
                 <div style={{
                   position: "absolute", top: dotY + "px", left: 0, right: 0, height: "1px",
@@ -242,23 +256,25 @@ function NinesScale() {
 
                 {/* Axis label */}
                 <div style={{
-                  position: "absolute", top: dotY - 30 + "px", left: "50%", transform: "translateX(-50%)",
+                  position: "absolute", top: dotY - 28 + "px", left: "50%", transform: "translateX(-50%)",
                   fontSize: "9px", color: "#374151", fontFamily: FONTS, letterSpacing: "0.05em",
                   whiteSpace: "nowrap",
                 }}>NINES (log₁₀ miles per event)</div>
 
                 {/* Target threshold lines */}
-                {TARGET_THRESHOLDS.map(function(t) {
+                {TARGET_THRESHOLDS.map(function(t, ti) {
                   return (
                     <div key={t.nines} style={{
                       position: "absolute", left: pct(t.nines) + "%", top: dotY - 6 + "px",
-                      width: "0px", height: chartHeight - dotY + 6 + "px",
-                      borderLeft: "1px dashed " + t.color, opacity: 0.35,
+                      width: "0px", height: chartHeight - dotY + "px",
+                      borderLeft: "1px dashed " + t.color, opacity: 0.3,
                     }}>
                       <div style={{
-                        position: "absolute", bottom: "0px", left: "4px", whiteSpace: "nowrap",
-                        fontSize: "8px", color: t.color, fontFamily: FONTS, opacity: 0.9,
-                      }}>{t.label}</div>
+                        position: "absolute", bottom: "2px",
+                        left: "6px", whiteSpace: "nowrap",
+                        fontSize: "8px", color: t.color, fontFamily: FONTS, opacity: 0.8,
+                        letterSpacing: "0.02em",
+                      }}>{t.nines} — {t.label}</div>
                     </div>
                   );
                 })}
@@ -271,9 +287,9 @@ function NinesScale() {
                     <div key={i}>
                       {/* Connecting line from dot to label */}
                       <div style={{
-                        position: "absolute", left: x + "%", top: dotY + 5 + "px",
-                        width: "0px", height: labelOffsets[d.row] - 6 + "px",
-                        borderLeft: "1px solid " + d.color, opacity: 0.25,
+                        position: "absolute", left: x + "%", top: dotY + 6 + "px",
+                        width: "0px", height: labelOffsets[d.row] - 8 + "px",
+                        borderLeft: "1px solid " + d.color, opacity: 0.2,
                       }} />
                       {/* Dot */}
                       <div style={{
@@ -289,7 +305,7 @@ function NinesScale() {
                         position: "absolute", left: x + "%", top: labelTop + "px",
                         transform: "translateX(-50%)", textAlign: "center",
                         opacity: anim ? 1 : 0, transition: "opacity 0.4s ease " + (i * 60 + 200) + "ms",
-                        zIndex: 1, maxWidth: "85px",
+                        zIndex: 1, width: labelW - 6 + "px",
                       }}>
                         <div style={{ fontSize: "12px", fontWeight: 700, color: d.color, fontFamily: FONTS, lineHeight: 1.1 }}>
                           {d.nines}
