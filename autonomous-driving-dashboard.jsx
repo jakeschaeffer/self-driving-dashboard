@@ -195,7 +195,7 @@ function NinesScale() {
 
           // Assign stagger rows: track last used x per row, pick first non-overlapping row
           var points = sorted.map(function(d) {
-            return { nines: d.nines, label: d.label, sublabel: d.sublabel, color: d.color, row: 0 };
+            return { nines: d.nines, miles: d.miles, label: d.label, sublabel: d.sublabel, color: d.color, row: 0 };
           });
           var lastXByRow = [];
           for (var r = 0; r < numRows; r++) lastXByRow.push(-Infinity);
@@ -238,8 +238,9 @@ function NinesScale() {
                   background: "rgba(255,255,255,0.1)",
                 }} />
 
-                {/* Axis ticks */}
+                {/* Axis ticks — show miles at each nines integer */}
                 {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(function(n) {
+                  var milesAtTick = n === 0 ? "1" : formatMiles(Math.pow(10, n));
                   return (
                     <div key={n} style={{ position: "absolute", left: pct(n) + "%", top: dotY - 14 + "px" }}>
                       <div style={{
@@ -248,8 +249,8 @@ function NinesScale() {
                       }} />
                       <div style={{
                         position: "absolute", left: "0", transform: "translateX(-50%)",
-                        fontSize: "9px", color: "#4b5563", fontFamily: FONTS,
-                      }}>{n}</div>
+                        fontSize: "9px", color: "#4b5563", fontFamily: FONTS, whiteSpace: "nowrap",
+                      }}>{milesAtTick}</div>
                     </div>
                   );
                 })}
@@ -259,7 +260,7 @@ function NinesScale() {
                   position: "absolute", top: dotY - 28 + "px", left: "50%", transform: "translateX(-50%)",
                   fontSize: "9px", color: "#374151", fontFamily: FONTS, letterSpacing: "0.05em",
                   whiteSpace: "nowrap",
-                }}>NINES (log₁₀ miles per event)</div>
+                }}>MILES PER EVENT (log scale)</div>
 
                 {/* Target threshold lines */}
                 {TARGET_THRESHOLDS.map(function(t, ti) {
@@ -274,7 +275,7 @@ function NinesScale() {
                         left: "6px", whiteSpace: "nowrap",
                         fontSize: "8px", color: t.color, fontFamily: FONTS, opacity: 0.8,
                         letterSpacing: "0.02em",
-                      }}>{t.nines} — {t.label}</div>
+                      }}>{formatMiles(Math.pow(10, t.nines))} mi — {t.label}</div>
                     </div>
                   );
                 })}
@@ -308,7 +309,7 @@ function NinesScale() {
                         zIndex: 1, width: labelW - 6 + "px",
                       }}>
                         <div style={{ fontSize: "12px", fontWeight: 700, color: d.color, fontFamily: FONTS, lineHeight: 1.1 }}>
-                          {d.nines}
+                          {formatMiles(d.miles)} mi
                         </div>
                         <div style={{ fontSize: "10px", fontWeight: 600, color: "#cbd5e1", lineHeight: 1.2, marginTop: "2px" }}>
                           {d.label}
