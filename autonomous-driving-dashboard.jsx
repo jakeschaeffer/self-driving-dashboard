@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend, ReferenceLine } from "recharts";
 
 // ============================================================
 // DATA
@@ -184,6 +184,66 @@ function NinesScale() {
         <StatCard label="Human baseline" value="5.7" sublabel="nines — police-reported crashes" accent="#a3a3a3" sourceHref="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762" sourceText="NHTSA" />
         <StatCard label="Gap: Tesla to unsupervised" value="~460x" sublabel="vs. Elluswamy 670K mi target" accent="#ef4444" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
       </div>
+
+      {/* Progress chart */}
+      <Section title="Progress toward autonomous driving" subtitle="Each system plotted on the nines scale — target thresholds shown as dashed lines.">
+        <div style={{
+          background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: "10px", padding: "20px 12px 12px",
+        }}>
+          <ResponsiveContainer width="100%" height={sorted.length * 44 + 32}>
+            <BarChart
+              data={sorted.map(function(d) {
+                return { name: d.label + " — " + d.sublabel, nines: d.nines, color: d.color };
+              })}
+              layout="vertical"
+              margin={{ top: 0, right: 24, bottom: 0, left: 8 }}
+              barCategoryGap="20%"
+            >
+              <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis
+                type="number"
+                domain={[0, scaleMax]}
+                tick={{ fill: "#64748b", fontSize: 11, fontFamily: FONTS }}
+                axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                tickLine={false}
+                label={{ value: "Nines (log₁₀ miles per event)", position: "insideBottom", offset: -2, fill: "#4b5563", fontSize: 10, fontFamily: FONTS }}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={170}
+                tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: BODY }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{ background: "#1a1a3a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", fontFamily: FONTS, fontSize: 12 }}
+                labelStyle={{ color: "#e2e8f0", marginBottom: 4 }}
+                formatter={function(value) { return [value + " nines (" + formatMiles(Math.pow(10, value)) + " mi)", "Reliability"]; }}
+                cursor={{ fill: "rgba(255,255,255,0.02)" }}
+              />
+              {TARGET_THRESHOLDS.map(function(t) {
+                return (
+                  <ReferenceLine
+                    key={t.nines}
+                    x={t.nines}
+                    stroke={t.color}
+                    strokeDasharray="6 3"
+                    strokeOpacity={0.5}
+                    label={{ value: t.label, position: "top", fill: t.color, fontSize: 9, fontFamily: FONTS }}
+                  />
+                );
+              })}
+              <Bar dataKey="nines" radius={[0, 4, 4, 0]} maxBarSize={22}>
+                {sorted.map(function(d, i) {
+                  return <Cell key={i} fill={d.color} fillOpacity={0.85} />;
+                })}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Section>
 
       <div style={{
         background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
