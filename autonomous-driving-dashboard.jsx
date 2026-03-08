@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend, ReferenceLine } from "recharts";
 
 // ============================================================
 // DATA
@@ -184,6 +184,149 @@ function NinesScale() {
         <StatCard label="Human baseline" value="5.7" sublabel="nines — police-reported crashes" accent="#a3a3a3" sourceHref="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762" sourceText="NHTSA" />
         <StatCard label="Gap: Tesla to unsupervised" value="~460x" sublabel="vs. Elluswamy 670K mi target" accent="#ef4444" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
       </div>
+
+      {/* Progress chart — dot plot */}
+      <Section title="Progress toward autonomous driving" subtitle="Each system plotted on the nines scale — dashed lines mark key thresholds.">
+        {(function() {
+          var chartW = 960; // fixed inner width in px
+          var dotY = 36;
+          var labelW = 100; // label column width for overlap calc
+          var numRows = 4;
+
+          // Assign stagger rows: track last used x per row, pick first non-overlapping row
+          var points = sorted.map(function(d) {
+            return { nines: d.nines, miles: d.miles, label: d.label, sublabel: d.sublabel, color: d.color, row: 0 };
+          });
+          var lastXByRow = [];
+          for (var r = 0; r < numRows; r++) lastXByRow.push(-Infinity);
+          for (var i = 0; i < points.length; i++) {
+            var xPx = (points[i].nines / scaleMax) * chartW;
+            var placed = false;
+            for (var row = 0; row < numRows; row++) {
+              if (xPx - lastXByRow[row] >= labelW) {
+                points[i].row = row;
+                lastXByRow[row] = xPx;
+                placed = true;
+                break;
+              }
+            }
+            if (!placed) {
+              // fallback: pick row with largest gap
+              var bestRow = 0; var bestGap = -Infinity;
+              for (var row = 0; row < numRows; row++) {
+                var gap = xPx - lastXByRow[row];
+                if (gap > bestGap) { bestGap = gap; bestRow = row; }
+              }
+              points[i].row = bestRow;
+              lastXByRow[bestRow] = xPx;
+            }
+          }
+
+          var labelOffsets = [24, 72, 120, 168]; // px below dot per stagger row
+          var maxOffset = labelOffsets[numRows - 1];
+          var chartHeight = dotY + maxOffset + 52 + 12; // dot area + deepest label + text height + threshold stagger
+
+          return (
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: "10px", padding: "20px 0 16px", overflowX: "auto", WebkitOverflowScrolling: "touch",
+            }}>
+              <div style={{ position: "relative", height: chartHeight + "px", minWidth: chartW + "px", margin: "0 28px" }}>
+                {/* Axis line */}
+                <div style={{
+                  position: "absolute", top: dotY + "px", left: 0, right: 0, height: "1px",
+                  background: "rgba(255,255,255,0.1)",
+                }} />
+
+                {/* Axis ticks — show miles at each nines integer */}
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(function(n) {
+                  var milesAtTick = n === 0 ? "1" : formatMiles(Math.pow(10, n));
+                  return (
+                    <div key={n} style={{ position: "absolute", left: pct(n) + "%", top: dotY - 14 + "px" }}>
+                      <div style={{
+                        position: "absolute", left: "-1px", top: "14px", width: "1px", height: "6px",
+                        background: "rgba(255,255,255,0.12)",
+                      }} />
+                      <div style={{
+                        position: "absolute", left: "0", transform: "translateX(-50%)",
+                        fontSize: "9px", color: "#4b5563", fontFamily: FONTS, whiteSpace: "nowrap",
+                      }}>{milesAtTick}</div>
+                    </div>
+                  );
+                })}
+
+                {/* Axis label */}
+                <div style={{
+                  position: "absolute", top: dotY - 28 + "px", left: "50%", transform: "translateX(-50%)",
+                  fontSize: "9px", color: "#374151", fontFamily: FONTS, letterSpacing: "0.05em",
+                  whiteSpace: "nowrap",
+                }}>MILES PER EVENT (log scale)</div>
+
+                {/* Target threshold lines */}
+                {TARGET_THRESHOLDS.map(function(t, ti) {
+                  var thresholdStagger = [0, 10, 20, 30]; // stagger bottom labels so they don't overlap
+                  return (
+                    <div key={t.nines} style={{
+                      position: "absolute", left: pct(t.nines) + "%", top: dotY - 6 + "px",
+                      width: "0px", height: maxOffset + 52 + thresholdStagger[ti] + "px",
+                      borderLeft: "1px dashed " + t.color, opacity: 0.3,
+                    }}>
+                      <div style={{
+                        position: "absolute", bottom: "2px",
+                        left: "6px", whiteSpace: "nowrap",
+                        fontSize: "8px", color: t.color, fontFamily: FONTS, opacity: 0.8,
+                        letterSpacing: "0.02em",
+                      }}>{formatMiles(Math.pow(10, t.nines))} mi — {t.label}</div>
+                    </div>
+                  );
+                })}
+
+                {/* Data points */}
+                {points.map(function(d, i) {
+                  var x = pct(d.nines);
+                  var labelTop = dotY + labelOffsets[d.row];
+                  return (
+                    <div key={i}>
+                      {/* Connecting line from dot to label */}
+                      <div style={{
+                        position: "absolute", left: x + "%", top: dotY + 6 + "px",
+                        width: "0px", height: labelOffsets[d.row] - 8 + "px",
+                        borderLeft: "1px solid " + d.color, opacity: 0.2,
+                      }} />
+                      {/* Dot */}
+                      <div style={{
+                        position: "absolute", left: "calc(" + x + "% - 5px)", top: dotY - 5 + "px",
+                        width: "10px", height: "10px", borderRadius: "50%",
+                        background: d.color, boxShadow: "0 0 8px " + d.color + "50",
+                        opacity: anim ? 1 : 0, transform: anim ? "scale(1)" : "scale(0)",
+                        transition: "all 0.4s ease " + (i * 60) + "ms",
+                        zIndex: 2,
+                      }} />
+                      {/* Label */}
+                      <div style={{
+                        position: "absolute", left: x + "%", top: labelTop + "px",
+                        transform: "translateX(-50%)", textAlign: "center",
+                        opacity: anim ? 1 : 0, transition: "opacity 0.4s ease " + (i * 60 + 200) + "ms",
+                        zIndex: 1, width: labelW - 6 + "px",
+                      }}>
+                        <div style={{ fontSize: "12px", fontWeight: 700, color: d.color, fontFamily: FONTS, lineHeight: 1.1 }}>
+                          {formatMiles(d.miles)} mi
+                        </div>
+                        <div style={{ fontSize: "10px", fontWeight: 600, color: "#cbd5e1", lineHeight: 1.2, marginTop: "2px" }}>
+                          {d.label}
+                        </div>
+                        <div style={{ fontSize: "9px", color: "#4b5563", lineHeight: 1.2 }}>
+                          {d.sublabel}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+      </Section>
 
       <div style={{
         background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
