@@ -224,7 +224,7 @@ function NinesScale() {
 
           var labelOffsets = [24, 72, 120, 168]; // px below dot per stagger row
           var maxOffset = labelOffsets[numRows - 1];
-          var chartHeight = dotY + maxOffset + 52 + 42; // dot area + deepest label + text height + threshold stagger
+          var chartHeight = dotY + maxOffset + 52 + 24; // dot area + deepest label + text height + threshold stagger
 
           return (
             <div style={{
@@ -264,7 +264,7 @@ function NinesScale() {
 
                 {/* Target threshold lines */}
                 {TARGET_THRESHOLDS.map(function(t, ti) {
-                  var thresholdStagger = [0, 14, 28, 42]; // stagger bottom labels so they don't overlap
+                  var thresholdStagger = [0, 10, 20, 30]; // stagger bottom labels so they don't overlap
                   return (
                     <div key={t.nines} style={{
                       position: "absolute", left: pct(t.nines) + "%", top: dotY - 6 + "px",
