@@ -130,7 +130,7 @@ const NAV_ITEMS = [
 
 function Nav({ active, onChange }) {
   return (
-    <nav style={{
+    <nav className="av-nav" style={{
       display: "flex", gap: "2px", background: "#13132b",
       borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 20px",
       overflowX: "auto", WebkitOverflowScrolling: "touch",
@@ -328,10 +328,11 @@ function NinesScale() {
         })()}
       </Section>
 
-      <div style={{
+      <div className="av-grid-table" style={{
         background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: "10px", padding: "16px 0", overflow: "hidden",
       }}>
+       <div>
         {/* Header row */}
         <div style={{
           display: "grid", gridTemplateColumns: "minmax(150px, 180px) 54px 1fr 80px 80px",
@@ -454,6 +455,7 @@ function NinesScale() {
             );
           })}
         </div>
+       </div>
       </div>
 
       {/* Legend */}
@@ -512,7 +514,7 @@ function ComparisonPage() {
   return (
     <div>
       <Section title="Crash rates: AV systems vs. human drivers" subtitle="Higher miles-per-crash = safer. Green = outperforming human average. All rates in miles per crash.">
-        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", overflow: "hidden" }}>
+        <div className="av-comp-table" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -544,10 +546,10 @@ function ComparisonPage() {
       <Section title="Waymo crash reduction by severity" subtitle="Incidents per million miles. Peer-reviewed data at 56.7M miles and Swiss Re insurance data at 25.3M miles.">
         <div style={{ height: "320px" }}>
           <ResponsiveContainer>
-            <BarChart data={WAYMO_CRASH_COMPARISON} layout="vertical" margin={{ left: 140, right: 40, top: 5, bottom: 5 }}>
+            <BarChart data={WAYMO_CRASH_COMPARISON} layout="vertical" margin={{ left: 20, right: 20, top: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
               <XAxis type="number" tick={{ fill: "#4b5563", fontSize: 10, fontFamily: FONTS }} label={{ value: "Incidents per million miles", position: "bottom", offset: -5, fill: "#374151", fontSize: 10 }} />
-              <YAxis dataKey="category" type="category" tick={{ fill: "#94a3b8", fontSize: 11 }} width={130} />
+              <YAxis dataKey="category" type="category" tick={{ fill: "#94a3b8", fontSize: 10 }} width={110} />
               <Tooltip contentStyle={{ background: "#1a1a30", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", fontSize: "11px" }} />
               <Bar dataKey="human" name="Human drivers" fill="#6b7280" radius={[0, 3, 3, 0]} barSize={14} />
               <Bar dataKey="waymo" name="Waymo" fill="#3b82f6" radius={[0, 3, 3, 0]} barSize={14} />
@@ -722,7 +724,7 @@ function TeslaPage() {
       </Section>
 
       <Section title="Supervised FSD vs. Austin Robotaxi" subtitle="Two very different products with very different safety records.">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+        <div className="av-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "18px" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: "#fbbf24", marginBottom: "12px" }}>FSD Supervised (consumer)</div>
             {[
@@ -806,7 +808,7 @@ function TargetsPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {TARGET_THRESHOLDS.map(function(t, i) {
             return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid " + t.color + "20", borderRadius: "8px", borderLeft: "4px solid " + t.color, padding: "14px 18px" }}>
+              <div key={i} className="av-threshold-card" style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid " + t.color + "20", borderRadius: "8px", borderLeft: "4px solid " + t.color, padding: "14px 18px" }}>
                 <div style={{ minWidth: "70px" }}>
                   <div style={{ fontSize: "26px", fontWeight: 700, color: t.color, fontFamily: FONTS, lineHeight: 1 }}>{t.nines}</div>
                   <div style={{ fontSize: "9px", color: "#4b5563", marginTop: "2px" }}>nines</div>
@@ -917,6 +919,18 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: "#0d0d1f", color: "#e2e8f0", fontFamily: BODY }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      <style>{`
+        @media (max-width: 640px) {
+          .av-grid-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .av-grid-table > div { min-width: 560px; }
+          .av-two-col { grid-template-columns: 1fr !important; }
+          .av-comp-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .av-comp-table table { min-width: 520px; }
+          .av-threshold-card { flex-direction: column !important; gap: 8px !important; }
+          .av-threshold-card > div:last-child { text-align: left !important; min-width: 0 !important; }
+          .av-nav button { padding: 13px 11px !important; font-size: 10px !important; }
+        }
+      `}</style>
 
       <header style={{ padding: "20px 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
