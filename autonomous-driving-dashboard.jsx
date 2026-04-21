@@ -78,6 +78,22 @@ const formatMiles = (n) => {
   return n.toString();
 };
 
+// Viewport-width hook. Pages use this to switch grid layouts below ~720px so multi-column
+// blocks (tables, side-by-side cards) don't get starved of width on mobile.
+function useNarrow(breakpoint) {
+  breakpoint = breakpoint || 720;
+  var _s = useState(typeof window !== "undefined" && window.innerWidth < breakpoint);
+  var narrow = _s[0];
+  var setNarrow = _s[1];
+  useEffect(function() {
+    var check = function() { setNarrow(window.innerWidth < breakpoint); };
+    check();
+    window.addEventListener("resize", check);
+    return function() { window.removeEventListener("resize", check); };
+  }, [breakpoint]);
+  return narrow;
+}
+
 // Human-relative framing: "3.2× safer" / "360× worse" / "Match". The human baseline
 // (5.7 nines = NHTSA all-crash rate) is the anchor the hero chart references.
 function relToHuman(nines) {
@@ -197,7 +213,7 @@ function Section({ title, subtitle, children }) {
 }
 
 const NAV_ITEMS = [
-  { id: "home", label: "The Nines Scale" },
+  { id: "home", label: "Progress overview" },
   { id: "comparison", label: "AV vs Humans" },
   { id: "waymo", label: "Waymo" },
   { id: "tesla", label: "Tesla FSD" },
@@ -233,10 +249,12 @@ function Nav({ active, onChange }) {
 function NinesScale() {
   const [anim, setAnim] = useState(false);
   const [hover, setHover] = useState(null);
+  const narrow = useNarrow();
   const closeTimer = useRef(null);
   useEffect(function() { var t = setTimeout(function() { setAnim(true); }, 80); return function() { clearTimeout(t); }; }, []);
 
   // Hover handlers — tooltip stays alive while cursor is on the tip, so users can click the source link.
+  // Only the hero chart uses hover; the ladder below is display-only.
   var onEnterDot = function(data, x, y) {
     if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; }
     setHover({ data: data, x: x, y: y });
@@ -270,10 +288,10 @@ function NinesScale() {
   return (
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "28px" }}>
-        <StatCard label="Waymo best" value="7.7" sublabel="nines — serious injury rate" accent="#3b82f6" sourceHref="https://waymo.com/safety/impact" sourceText="Waymo Safety" />
-        <StatCard label="Tesla FSD v14" value="3.2" sublabel="nines — critical disengagement" accent="#f59e0b" sourceHref="https://www.teslafsdtracker.com/" sourceText="teslafsdtracker" />
-        <StatCard label="Human baseline" value="5.7" sublabel="nines — police-reported crashes" accent="#a3a3a3" sourceHref="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762" sourceText="NHTSA" />
-        <StatCard label="Gap: Tesla to unsupervised" value="~460x" sublabel="vs. Elluswamy 670K mi target" accent="#ef4444" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
+        <StatCard label="Waymo best" value="50M mi" sublabel="per serious injury crash" accent="#3b82f6" sourceHref="https://waymo.com/safety/impact" sourceText="Waymo Safety" />
+        <StatCard label="Tesla FSD v14" value="1,454 mi" sublabel="per critical disengagement" accent="#f59e0b" sourceHref="https://www.teslafsdtracker.com/" sourceText="teslafsdtracker" />
+        <StatCard label="Human baseline" value="529K mi" sublabel="per police-reported crash" accent="#a3a3a3" sourceHref="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762" sourceText="NHTSA" />
+        <StatCard label="Gap: Tesla to unsupervised" value="~460×" sublabel="vs. Elluswamy 670K mi target" accent="#ef4444" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
       </div>
 
       {/* Hero chart — Horizon dot plot. Human baseline is a horizontal horizon; systems plot
@@ -448,133 +466,175 @@ function NinesScale() {
         })()}
       </Section>
 
-      <div style={{
-        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: "10px", padding: "16px 0", overflow: "hidden",
-      }}>
-        {/* Header row */}
-        <div style={{
-          display: "grid", gridTemplateColumns: "minmax(150px, 180px) 54px 1fr 80px 80px",
-          gap: "8px", padding: "0 20px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)",
-          alignItems: "end",
-        }}>
-          {["System", "Nines", "Reliability scale", "Per event", "Per driver"].map(function(h, i) {
-            return (
-              <div key={i} style={{
-                fontSize: "9px", color: "#4b5563", textTransform: "uppercase",
-                letterSpacing: "0.1em", fontFamily: FONTS, fontWeight: 600,
-                textAlign: i >= 3 ? "right" : "left",
-              }}>{h}</div>
-            );
-          })}
-        </div>
-
-        {/* Data rows */}
-        {sorted.map(function(d, i) {
-          var barWidth = pct(d.nines);
-          var isHuman = d.category === "human";
-          var prevZone = i > 0 ? zoneLabel(sorted[i - 1].nines) : null;
-          var currentZone = zoneLabel(d.nines);
-          var showZone = i === 0 || currentZone !== prevZone;
-
-          return (
-            <div key={i}>
-              {showZone && (
-                <div style={{
-                  padding: "8px 20px 2px", fontSize: "9px", color: zoneColor(d.nines),
-                  textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: FONTS,
-                  fontWeight: 700, opacity: 0.6,
-                }}>{currentZone}</div>
+      {/* Ranked ladder — safest first. Bar length encodes log miles; each row shows an explicit
+          ×-vs-human delta. Labels flip left of the dot for high-pct rows to avoid overlap with
+          the vs-Human column on the right. */}
+      {(function() {
+        var human = 5.7;
+        var ladderSorted = NINES_SCALE_DATA.slice().sort(function(a, b) { return b.nines - a.nines; });
+        return (
+          <div style={{
+            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: "10px", padding: "20px 24px 16px", position: "relative",
+          }}>
+            {/* Column header — at narrow widths the axis ruler is dropped (bars move to their
+                own row beneath each entry), and header collapses to "System | vs Human". */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: narrow ? "1fr 72px" : "220px 1fr 88px",
+              gap: "14px", padding: "0 0 12px",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              fontSize: "9px", color: "#4b5563", fontFamily: FONTS,
+              letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600,
+              alignItems: "end",
+            }}>
+              <div>System</div>
+              {!narrow && (
+                <div style={{ position: "relative", height: "28px" }}>
+                  <div style={{
+                    position: "absolute", left: (human / scaleMax) * 100 + "%",
+                    transform: "translateX(-50%)", top: "0px",
+                    fontSize: "8px", color: "oklch(0.82 0.02 260)", fontWeight: 700,
+                    letterSpacing: "0.14em",
+                  }}>HUMAN</div>
+                  <div style={{
+                    position: "absolute", left: (human / scaleMax) * 100 + "%",
+                    transform: "translateX(-50%)", top: "10px",
+                    width: "1px", height: "6px",
+                    background: "oklch(0.65 0.02 260 / 0.55)",
+                  }} />
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(function(n) {
+                    return (
+                      <div key={n} style={{
+                        position: "absolute", left: (n / scaleMax) * 100 + "%",
+                        bottom: "0px",
+                        transform: "translateX(-50%)", fontSize: "8px", color: "#374151",
+                      }}>{formatMiles(Math.pow(10, n))} mi</div>
+                    );
+                  })}
+                </div>
               )}
-              <div style={{
-                display: "grid", gridTemplateColumns: "minmax(150px, 180px) 54px 1fr 80px 80px",
-                gap: "8px", padding: "9px 20px", alignItems: "center",
-                borderBottom: "1px solid rgba(255,255,255,0.025)",
-                background: isHuman ? "rgba(255,255,255,0.02)" : "transparent",
-                opacity: anim ? 1 : 0, transform: anim ? "translateX(0)" : "translateX(-8px)",
-                transition: "all 0.4s ease " + (i * 50) + "ms",
-              }}>
-                {/* Label column */}
-                <div>
-                  <div style={{ fontSize: "12px", fontWeight: 600, color: d.color, lineHeight: 1.25 }}>{d.label}</div>
-                  <div style={{ fontSize: "10px", color: "#4b5563", lineHeight: 1.3, marginTop: "1px" }}>{d.sublabel}</div>
-                  <Src href={d.source}>{d.sourceLabel}</Src>
-                </div>
-
-                {/* Nines number */}
-                <div style={{ fontSize: "16px", fontWeight: 700, color: d.color, fontFamily: FONTS }}>{d.nines}</div>
-
-                {/* Bar */}
-                <div style={{ position: "relative", height: "20px" }}>
-                  <div style={{
-                    position: "absolute", top: "8px", left: 0, right: 0, height: "4px",
-                    background: "rgba(255,255,255,0.03)", borderRadius: "2px",
-                  }} />
-                  <div style={{
-                    position: "absolute", top: "3px", left: pct(5.7) + "%", width: "1px",
-                    height: "14px", background: "rgba(163,163,163,0.25)",
-                  }} />
-                  <div style={{
-                    position: "absolute", top: "8px", left: 0,
-                    width: anim ? barWidth + "%" : "0%", height: "4px",
-                    background: "linear-gradient(90deg, " + d.color + "30, " + d.color + ")",
-                    borderRadius: "2px", transition: "width 0.7s ease " + (i * 50 + 150) + "ms",
-                  }} />
-                  <div style={{
-                    position: "absolute", top: "5px",
-                    left: anim ? "calc(" + barWidth + "% - 5px)" : "-5px",
-                    width: "10px", height: "10px", borderRadius: "50%",
-                    background: d.color, boxShadow: "0 0 6px " + d.color + "40",
-                    transition: "left 0.7s ease " + (i * 50 + 150) + "ms",
-                  }} />
-                </div>
-
-                {/* Miles */}
-                <div style={{ fontSize: "12px", fontWeight: 600, color: "#cbd5e1", fontFamily: FONTS, textAlign: "right" }}>
-                  {formatMiles(d.miles)} mi
-                </div>
-
-                {/* Years */}
-                <div style={{ fontSize: "11px", color: "#4b5563", fontFamily: FONTS, textAlign: "right" }}>
-                  {yearsPerCrash(d.miles)}
-                </div>
-              </div>
+              <div style={{ textAlign: "right" }}>vs Human</div>
             </div>
-          );
-        })}
 
-        {/* Target thresholds */}
-        <div style={{ padding: "14px 20px 6px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ fontSize: "9px", color: "#374151", textTransform: "uppercase",
-            letterSpacing: "0.1em", fontFamily: FONTS, marginBottom: "6px", fontWeight: 600 }}>
-            Estimated target thresholds
+            {/* Rows */}
+            <div style={{ position: "relative" }}>
+              {ladderSorted.map(function(d, i) {
+                var barPct = (d.nines / scaleMax) * 100;
+                var rel = relToHuman(d.nines);
+                var signColor = rel.sign > 0 ? "oklch(0.75 0.15 155)" : rel.sign < 0 ? "oklch(0.72 0.16 30)" : "#cbd5e1";
+                var isHuman = d.category === "human";
+                // Flip inline mi/event label to the LEFT of the dot once the bar is long enough that
+                // a right-side label would crash into the 88px "vs Human" column. 55% is the safe cutoff.
+                var labelOnLeft = barPct >= 55;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: narrow ? "1fr 72px" : "220px 1fr 88px",
+                      gridTemplateRows: narrow ? "auto auto" : "auto",
+                      columnGap: "14px",
+                      rowGap: narrow ? "8px" : "0",
+                      alignItems: "center",
+                      padding: "11px 0",
+                      borderBottom: "1px solid rgba(255,255,255,0.03)",
+                      background: isHuman ? "rgba(255,255,255,0.02)" : "transparent",
+                      opacity: anim ? 1 : 0,
+                      transform: anim ? "translateX(0)" : "translateX(-8px)",
+                      transition: "opacity 0.4s ease " + (i * 50) + "ms, transform 0.4s ease " + (i * 50) + "ms",
+                    }}
+                  >
+                    {/* Label column */}
+                    <div>
+                      <div style={{ fontSize: "12px", fontWeight: 600, color: d.color, lineHeight: 1.2 }}>{d.label}</div>
+                      <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>{d.sublabel}</div>
+                    </div>
+
+                    {/* vs Human delta — rendered second in DOM so it sits in col 2 row 1 of the
+                        narrow grid (next to the label); on wide screens it stays col 3. */}
+                    {narrow && (
+                      <div style={{
+                        textAlign: "right", fontFamily: FONTS,
+                        fontSize: "12px", fontWeight: 700, color: signColor,
+                      }}>{rel.text}</div>
+                    )}
+
+                    {/* Bar — full width on narrow (spans both columns on row 2), middle column on wide */}
+                    <div style={{
+                      position: "relative", height: "22px",
+                      gridColumn: narrow ? "1 / -1" : "auto",
+                    }}>
+                      {/* Baseline track */}
+                      <div style={{
+                        position: "absolute", left: 0, right: 0, top: "10px", height: "2px",
+                        background: "rgba(255,255,255,0.04)", borderRadius: "1px",
+                      }} />
+                      {/* Human rule */}
+                      <div style={{
+                        position: "absolute", left: (human / scaleMax) * 100 + "%",
+                        top: "2px", bottom: "2px", width: "1px",
+                        background: "oklch(0.65 0.02 260 / 0.45)",
+                      }} />
+                      {/* Bar fill */}
+                      <div style={{
+                        position: "absolute", left: 0, top: "9px",
+                        width: (anim ? barPct : 0) + "%", height: "4px", borderRadius: "2px",
+                        background: "linear-gradient(90deg, " + d.color + "20, " + d.color + ")",
+                        transition: "width 0.7s ease " + (i * 50 + 150) + "ms",
+                      }} />
+                      {/* Dot at end of bar */}
+                      <div style={{
+                        position: "absolute",
+                        left: "calc(" + (anim ? barPct : 0) + "% - 6px)", top: "5px",
+                        width: "12px", height: "12px", borderRadius: "6px",
+                        background: d.color,
+                        boxShadow: "0 0 0 3px " + d.color + "22",
+                        transition: "left 0.7s ease " + (i * 50 + 150) + "ms",
+                      }} />
+                      {/* Inline miles / event label — right of dot for short bars, left of dot for long bars
+                          so the text never runs into the vs-Human column on the right. */}
+                      {labelOnLeft ? (
+                        <div style={{
+                          position: "absolute",
+                          right: "calc(" + (100 - barPct) + "% + 18px)", top: "3px",
+                          fontSize: "11px", fontWeight: 700, color: d.color,
+                          fontFamily: FONTS, whiteSpace: "nowrap",
+                          textAlign: "right",
+                          opacity: anim ? 1 : 0,
+                          transition: "opacity 0.4s ease " + (i * 50 + 300) + "ms",
+                        }}>
+                          {formatMiles(d.miles)} mi <span style={{ color: "#64748b", fontWeight: 500 }}>/ {d.event}</span>
+                        </div>
+                      ) : (
+                        <div style={{
+                          position: "absolute",
+                          left: "calc(" + barPct + "% + 12px)", top: "3px",
+                          fontSize: "11px", fontWeight: 700, color: d.color,
+                          fontFamily: FONTS, whiteSpace: "nowrap",
+                          opacity: anim ? 1 : 0,
+                          transition: "opacity 0.4s ease " + (i * 50 + 300) + "ms",
+                        }}>
+                          {formatMiles(d.miles)} mi <span style={{ color: "#64748b", fontWeight: 500 }}>/ {d.event}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* vs Human delta — only on wide (narrow renders it above, next to the label) */}
+                    {!narrow && (
+                      <div style={{
+                        textAlign: "right", fontFamily: FONTS,
+                        fontSize: "12px", fontWeight: 700, color: signColor,
+                      }}>{rel.text}</div>
+                    )}
+                  </div>
+                );
+              })}
+
+            </div>
           </div>
-          {TARGET_THRESHOLDS.map(function(t, i) {
-            return (
-              <div key={i} style={{
-                display: "grid", gridTemplateColumns: "minmax(150px, 180px) 54px 1fr 80px 80px",
-                gap: "8px", padding: "5px 0", alignItems: "center", opacity: 0.7,
-              }}>
-                <div style={{ fontSize: "11px", color: t.color, fontWeight: 500 }}>{t.label}</div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: t.color, fontFamily: FONTS }}>{t.nines}</div>
-                <div style={{ position: "relative", height: "12px" }}>
-                  <div style={{
-                    position: "absolute", top: "4px", left: pct(t.nines) + "%",
-                    width: "10px", height: "4px", background: t.color, borderRadius: "2px",
-                    opacity: 0.5, transform: "translateX(-5px)",
-                  }} />
-                </div>
-                <div style={{ fontSize: "10px", color: "#4b5563", fontFamily: FONTS, textAlign: "right" }}>
-                  {formatMiles(Math.pow(10, t.nines))} mi
-                </div>
-                <div style={{ fontSize: "10px", color: "#374151", fontFamily: FONTS, textAlign: "right" }}>
-                  {yearsPerCrash(Math.pow(10, t.nines))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Legend */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "18px", marginTop: "12px", justifyContent: "center" }}>
@@ -593,8 +653,8 @@ function NinesScale() {
       </div>
 
       <Note>
-        Disengagements and crashes are different metrics. Tesla "miles per intervention" and Waymo "miles per crash" are not directly comparable.
-        The nines shown use each system's best available metric — see source links for methodology.
+        Disengagements and crashes are different metrics — Tesla's "miles per intervention" and Waymo's "miles per crash" are not directly comparable.
+        Each row above uses each system's best available metric; see source links for methodology.
         Human crash data underreports minor incidents by ~60% (<Src href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762">NHTSA</Src>),
         while AVs report virtually every contact event.
       </Note>
@@ -605,9 +665,9 @@ function NinesScale() {
         border: "1px solid rgba(96,165,250,0.12)", borderRadius: "8px",
       }}>
         <div style={{ fontSize: "13px", color: "#e2e8f0", lineHeight: 1.7 }}>
-          <strong style={{ color: "#60a5fa" }}>The key insight:</strong> Each additional "nine" requires a 10x improvement.
-          Tesla FSD v14 at 3.2 nines needs to improve <strong>~360x</strong> to match the average human driver at 5.7 nines.
-          Waymo has crossed the human baseline on crash metrics — but only within carefully mapped operational domains.
+          <strong style={{ color: "#60a5fa" }}>The key insight:</strong> every decade on this chart is a 10× improvement in safety.
+          Tesla FSD v14 at <strong>1,454 miles between disengagements</strong> would have to improve <strong>~360×</strong> — roughly two-and-a-half decades on the scale — to match the average human driver at <strong>529,000 miles between crashes</strong>.
+          Waymo has crossed the human baseline on crash metrics, but only within carefully mapped operational domains.
           RAND researchers <Src href="https://www.rand.org/pubs/research_reports/RR1478.html">calculated</Src> that proving an AV is 20% safer than humans would require ~8.8 billion test miles.
         </div>
       </div>
@@ -620,40 +680,65 @@ function NinesScale() {
 // ============================================================
 
 function ComparisonPage() {
+  var narrow = useNarrow();
   var compData = [
-    { metric: "Police-reported crash rate", human: "529K", waymo: "~476K", tesla: "~57K", waymoGood: false, teslaGood: false, src: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", srcLabel: "NHTSA" },
-    { metric: "Injury crash rate", human: "252K", waymo: "1.35M", tesla: "\u2014", waymoGood: true, teslaGood: null, src: "https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786", srcLabel: "Kusano et al." },
-    { metric: "Serious injury crash rate", human: "~5M", waymo: "50M", tesla: "\u2014", waymoGood: true, teslaGood: null, src: "https://waymo.com/safety/impact", srcLabel: "Waymo Safety" },
-    { metric: "Fatal crash rate", human: "86M", waymo: "0 fatalities*", tesla: "\u2014", waymoGood: true, teslaGood: null, src: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", srcLabel: "NHTSA" },
+    { metric: "Police-reported crash", human: "529K", waymo: "~476K", tesla: "~57K", waymoGood: false, teslaGood: false, src: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", srcLabel: "NHTSA" },
+    { metric: "Injury crash",           human: "252K", waymo: "1.35M", tesla: "\u2014", waymoGood: true, teslaGood: null,  src: "https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786", srcLabel: "Kusano et al." },
+    { metric: "Serious injury crash",   human: "~5M",  waymo: "50M",   tesla: "\u2014", waymoGood: true, teslaGood: null,  src: "https://waymo.com/safety/impact", srcLabel: "Waymo Safety" },
+    { metric: "Fatal crash",            human: "86M",  waymo: "0 fatalities*", tesla: "\u2014", waymoGood: true, teslaGood: null,  src: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", srcLabel: "NHTSA" },
   ];
 
   return (
     <div>
-      <Section title="Crash rates: AV systems vs. human drivers" subtitle="Higher miles-per-crash = safer. Green = outperforming human average. All rates in miles per crash.">
+      <Section title="Crash rates: AV systems vs. human drivers" subtitle="Every number is miles between events — higher is safer. Green = outperforming the human average; amber = worse than humans; em dash = no comparable data.">
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          {/* Mobile: horizontal scroll so the 5-column table doesn't squeeze cells into illegibility. */}
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <table style={{ width: "100%", minWidth: narrow ? "520px" : "auto", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                {["Metric", "Human avg", "Waymo", "Tesla Robotaxi", "Source"].map(function(h, i) {
-                  return (<th key={i} style={{ padding: "11px 14px", textAlign: i === 0 || i === 4 ? "left" : "right", fontSize: "10px", color: "#4b5563", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: FONTS, fontWeight: 600 }}>{h}</th>);
+                {[
+                  { label: "Event type", sub: null, align: "left" },
+                  { label: "Human avg", sub: "mi / event", align: "right" },
+                  { label: "Waymo", sub: "mi / event", align: "right" },
+                  { label: "Tesla Robotaxi", sub: "mi / event", align: "right" },
+                  { label: "Source", sub: null, align: "left" },
+                ].map(function(h, i) {
+                  return (
+                    <th key={i} style={{ padding: "11px 14px", textAlign: h.align, fontSize: "10px", color: "#4b5563", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: FONTS, fontWeight: 600, verticalAlign: "bottom" }}>
+                      <div>{h.label}</div>
+                      {h.sub && <div style={{ fontSize: "8px", color: "#2a3141", fontWeight: 500, textTransform: "none", letterSpacing: "0.04em", marginTop: "2px" }}>{h.sub}</div>}
+                    </th>
+                  );
                 })}
               </tr>
             </thead>
             <tbody>
               {compData.map(function(r, i) {
+                var renderCell = function(value, color) {
+                  // "—" stays plain; "0 fatalities*" has footnote already; everything else gets a small "mi" unit.
+                  var hasMiUnit = value !== "\u2014" && !/[a-z]/.test(value);
+                  return (
+                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: "13px", fontFamily: FONTS, fontWeight: 600, color: color, whiteSpace: "nowrap" }}>
+                      {value}{hasMiUnit && <span style={{ fontSize: "10px", color: "#4b5563", fontWeight: 500, marginLeft: "3px" }}>mi</span>}
+                    </td>
+                  );
+                };
                 return (
                   <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
                     <td style={{ padding: "12px 14px", fontSize: "12px", color: "#cbd5e1" }}>{r.metric}</td>
-                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: "13px", fontFamily: FONTS, color: "#a3a3a3", fontWeight: 600 }}>{r.human}</td>
-                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: "13px", fontFamily: FONTS, fontWeight: 600, color: r.waymoGood === true ? "#22c55e" : r.waymoGood === false ? "#fbbf24" : "#4b5563" }}>{r.waymo}</td>
-                    <td style={{ padding: "12px 14px", textAlign: "right", fontSize: "13px", fontFamily: FONTS, fontWeight: 600, color: r.teslaGood === true ? "#22c55e" : r.teslaGood === false ? "#ef4444" : "#4b5563" }}>{r.tesla}</td>
+                    {renderCell(r.human, "#a3a3a3")}
+                    {renderCell(r.waymo, r.waymoGood === true ? "#22c55e" : r.waymoGood === false ? "#fbbf24" : "#4b5563")}
+                    {renderCell(r.tesla, r.teslaGood === true ? "#22c55e" : r.teslaGood === false ? "#ef4444" : "#4b5563")}
                     <td style={{ padding: "12px 14px" }}><Src href={r.src}>{r.srcLabel}</Src></td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          </div>
         </div>
+        {narrow && <div style={{ fontSize: "9px", color: "#27273f", marginTop: "4px", fontFamily: FONTS, textAlign: "right" }}>↔ Scroll table sideways to see all columns</div>}
         <div style={{ fontSize: "10px", color: "#374151", marginTop: "6px" }}>
           * Waymo: zero fatalities in 127M+ driverless miles. Tesla robotaxi data from <Src href="https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/">Fortune analysis</Src>.
         </div>
@@ -799,6 +884,7 @@ function WaymoPage() {
 // ============================================================
 
 function TeslaPage() {
+  var narrow = useNarrow();
   return (
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "28px" }}>
@@ -826,21 +912,21 @@ function TeslaPage() {
           Source: <Src href="https://www.teslafsdtracker.com/">teslafsdtracker.com</Src> (crowdsourced)
         </div>
         <Note>
-          Crowdsourced data skews optimistic \u2014 enthusiast drivers in favorable conditions.
+          Crowdsourced data skews optimistic — enthusiast drivers in favorable conditions.
           Independent testing by <Src href="https://electrek.co/2024/09/26/tesla-full-self-driving-third-party-testing-13-miles-between-interventions/">AMCI</Src> on
           standardized routes found just 13 miles between interventions on v12.5.
         </Note>
         <div style={{ marginTop: "16px", padding: "16px 20px", background: "rgba(251,191,35,0.05)", border: "1px solid rgba(251,191,35,0.12)", borderRadius: "8px" }}>
           <div style={{ fontSize: "12px", color: "#e2e8f0", lineHeight: 1.7 }}>
-            <strong style={{ color: "#fbbf24" }}>If Tesla maintains ~2.7x improvement per version:</strong>
-            <br />v15 \u2192 ~3,900 mi \u00B7 v16 \u2192 ~10,500 mi \u00B7 v17 \u2192 ~28,400 mi \u00B7 v18 \u2192 ~76,700 mi \u00B7 v19 \u2192 ~207,000 mi \u00B7 v20 \u2192 ~560,000 mi
-            <br /><span style={{ color: "#64748b" }}>~6 more versions (~3 years) to reach the unsupervised threshold \u2014 if the rate holds. Historically, improvement rates slow at higher reliability.</span>
+            <strong style={{ color: "#fbbf24" }}>If Tesla maintains ~2.7× improvement per version:</strong>
+            <br />v15 → ~3,900 mi · v16 → ~10,500 mi · v17 → ~28,400 mi · v18 → ~76,700 mi · v19 → ~207,000 mi · v20 → ~560,000 mi
+            <br /><span style={{ color: "#64748b" }}>~6 more versions (~3 years) to reach the unsupervised threshold — if the rate holds. Historically, improvement rates slow at higher reliability.</span>
           </div>
         </div>
       </Section>
 
       <Section title="Supervised FSD vs. Austin Robotaxi" subtitle="Two very different products with very different safety records.">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: narrow ? "1fr" : "1fr 1fr", gap: "14px" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "18px" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: "#fbbf24", marginBottom: "12px" }}>FSD Supervised (consumer)</div>
             {[
@@ -920,22 +1006,22 @@ function TeslaPage() {
 function TargetsPage() {
   return (
     <div>
-      <Section title="Target thresholds: what nines do we need?" subtitle="No regulator has published specific thresholds. These are inferred from expert commentary and human benchmarks.">
+      <Section title="How safe is safe enough?" subtitle="No regulator has published a specific threshold. These are inferred from expert commentary and human benchmarks — each expressed as miles between events.">
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {TARGET_THRESHOLDS.map(function(t, i) {
             return (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid " + t.color + "20", borderRadius: "8px", borderLeft: "4px solid " + t.color, padding: "14px 18px" }}>
-                <div style={{ minWidth: "70px" }}>
-                  <div style={{ fontSize: "26px", fontWeight: 700, color: t.color, fontFamily: FONTS, lineHeight: 1 }}>{t.nines}</div>
-                  <div style={{ fontSize: "9px", color: "#4b5563", marginTop: "2px" }}>nines</div>
+                <div style={{ minWidth: "96px" }}>
+                  <div style={{ fontSize: "22px", fontWeight: 700, color: t.color, fontFamily: FONTS, lineHeight: 1 }}>{formatMiles(Math.pow(10, t.nines))} mi</div>
+                  <div style={{ fontSize: "9px", color: "#4b5563", marginTop: "4px" }}>per event · {yearsPerCrash(Math.pow(10, t.nines))} / driver</div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "13px", fontWeight: 600, color: "#e2e8f0" }}>{t.label}</div>
                   <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>{t.description}</div>
                 </div>
-                <div style={{ textAlign: "right", minWidth: "100px" }}>
-                  <div style={{ fontSize: "12px", color: "#94a3b8", fontFamily: FONTS }}>{formatMiles(Math.pow(10, t.nines))} mi</div>
-                  <div style={{ fontSize: "10px", color: "#4b5563" }}>{yearsPerCrash(Math.pow(10, t.nines))} per driver</div>
+                <div style={{ textAlign: "right", minWidth: "60px" }}>
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "#4b5563", fontFamily: FONTS }}>{t.nines}</div>
+                  <div style={{ fontSize: "9px", color: "#374151", marginTop: "2px" }}>nines</div>
                 </div>
               </div>
             );
@@ -1002,11 +1088,11 @@ function TargetsPage() {
             that while <strong style={{ color: "#a855f7" }}>63% of parents</strong> are comfortable driving with autonomous features,
             only <strong style={{ color: "#a855f7" }}>21% would allow their child to ride alone</strong>.
             <br /><br />
-            The implied threshold requires crash-rate superiority (<strong>7+ nines</strong>, ~1 crash per 10M+ miles) plus an entire safety infrastructure
+            The implied threshold requires crash-rate superiority (<strong>roughly 1 crash per 10M+ miles</strong>) plus an entire safety infrastructure
             that does not yet exist: remote monitoring, secure interiors, emergency communication, child-specific protocols,
             verified pickup/dropoff, behavioral monitoring, and medical emergency response.
             <br /><br />
-            Waymo's serious-injury rate (~7.7 nines) approaches the crash threshold, but the non-crash safety systems for unaccompanied minors remain largely unbuilt.
+            Waymo's serious-injury rate — about one event per 50 million miles — approaches the crash threshold, but the non-crash safety systems for unaccompanied minors remain largely unbuilt.
           </div>
         </div>
       </Section>
@@ -1019,7 +1105,7 @@ function TargetsPage() {
 // ============================================================
 
 var PAGES = {
-  home: { title: "The Nines Scale", sub: "Each additional 'nine' requires a 10x improvement. This is why the last mile to full autonomy is the hardest.", C: NinesScale },
+  home: { title: "How close are self-driving cars to human-level safety?", sub: "Tesla, Waymo, and human drivers plotted by miles between events on a log scale — where each decade is a 10× improvement. (Sometimes called the \"nines\" scale, since each 10× step adds one nine to the reliability rate.)", C: NinesScale },
   comparison: { title: "AV vs. Human Drivers", sub: "Side-by-side performance data using the most rigorous available metrics.", C: ComparisonPage },
   waymo: { title: "Waymo Deep Dive", sub: "127M driverless miles. Peer-reviewed safety data. The industry's clearest proof.", C: WaymoPage },
   tesla: { title: "Tesla FSD Deep Dive", sub: "Rapid version-over-version improvement, but a large gap remains to unsupervised operation.", C: TeslaPage },
