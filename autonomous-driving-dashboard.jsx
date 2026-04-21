@@ -1,22 +1,47 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend, ReferenceLine } from "recharts";
 
 // ============================================================
 // DATA
 // ============================================================
 
+// Harmonized palette — shared chroma, varied hue + lightness so Tesla/Waymo/Human families
+// sit on the same visual weight. Tesla = warm amber→red; Waymo = cool blue; Human = neutral.
+const CAT_COLORS = {
+  tesla: [
+    "oklch(0.62 0.17 40)",   // v12.5 AMCI
+    "oklch(0.68 0.16 50)",   // v12.5 crowd
+    "oklch(0.74 0.15 60)",   // v13
+    "oklch(0.80 0.14 75)",   // v14
+    "oklch(0.72 0.16 55)",   // Robotaxi
+  ],
+  waymo: [
+    "oklch(0.70 0.14 240)",  // testing
+    "oklch(0.64 0.16 245)",  // injury
+    "oklch(0.56 0.17 250)",  // serious injury
+  ],
+  human: [
+    "oklch(0.70 0.02 260)",  // avg
+    "oklch(0.55 0.02 260)",  // fatal
+  ],
+};
+
+// `event` names what one tick on the chart means for each row — we surface it per-dot so
+// disengagements, crashes, and fatalities don't visually conflate.
 const NINES_SCALE_DATA = [
-  { nines: 1.1, miles: 13, label: "Tesla FSD v12.5", sublabel: "AMCI independent test", color: "#ef4444", category: "tesla", source: "https://electrek.co/2024/09/26/tesla-full-self-driving-third-party-testing-13-miles-between-interventions/", sourceLabel: "Electrek / AMCI" },
-  { nines: 2.3, miles: 183, label: "Tesla FSD v12.5", sublabel: "Crowdsourced average", color: "#f87171", category: "tesla", source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
-  { nines: 2.7, miles: 493, label: "Tesla FSD v13", sublabel: "Crowdsourced average", color: "#fb923c", category: "tesla", source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
-  { nines: 3.2, miles: 1454, label: "Tesla FSD v14", sublabel: "Crowdsourced average", color: "#fbbf24", category: "tesla", source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
-  { nines: 4.5, miles: 29000, label: "Waymo (testing)", sublabel: "CA DMV disengagements", color: "#60a5fa", category: "waymo", source: "https://thelastdriverlicenseholder.com/2025/02/03/2024-disengagement-reports-from-california/", sourceLabel: "CA DMV via LDLH" },
-  { nines: 4.8, miles: 57000, label: "Tesla Robotaxi", sublabel: "Austin crash rate", color: "#f59e0b", category: "tesla", source: "https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/", sourceLabel: "Fortune" },
-  { nines: 5.7, miles: 529000, label: "Human Average", sublabel: "All police-reported crashes", color: "#a3a3a3", category: "human", isBaseline: true, source: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", sourceLabel: "NHTSA" },
-  { nines: 6.1, miles: 1350000, label: "Waymo", sublabel: "Injury crash rate", color: "#3b82f6", category: "waymo", source: "https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786", sourceLabel: "Kusano et al. 2025" },
-  { nines: 7.7, miles: 50000000, label: "Waymo", sublabel: "Serious injury crash rate", color: "#2563eb", category: "waymo", source: "https://waymo.com/safety/impact", sourceLabel: "Waymo Safety" },
-  { nines: 7.9, miles: 86000000, label: "Human Fatal", sublabel: "Fatal crash rate only", color: "#737373", category: "human", isBaseline: true, source: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", sourceLabel: "NHTSA" },
+  { nines: 1.1, miles: 13,        label: "Tesla FSD v12.5", sublabel: "AMCI independent test",       event: "disengagement",  category: "tesla", intensity: 0, source: "https://electrek.co/2024/09/26/tesla-full-self-driving-third-party-testing-13-miles-between-interventions/", sourceLabel: "Electrek / AMCI" },
+  { nines: 2.3, miles: 183,       label: "Tesla FSD v12.5", sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 1, source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
+  { nines: 2.7, miles: 493,       label: "Tesla FSD v13",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 2, source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
+  { nines: 3.2, miles: 1454,      label: "Tesla FSD v14",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 3, source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
+  { nines: 4.5, miles: 29000,     label: "Waymo (testing)", sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", intensity: 0, source: "https://thelastdriverlicenseholder.com/2025/02/03/2024-disengagement-reports-from-california/", sourceLabel: "CA DMV via LDLH" },
+  { nines: 4.8, miles: 57000,     label: "Tesla Robotaxi",  sublabel: "Austin crash rate",           event: "crash",          category: "tesla", intensity: 4, source: "https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/", sourceLabel: "Fortune" },
+  { nines: 5.7, miles: 529000,    label: "Human Average",   sublabel: "All police-reported crashes", event: "crash",          category: "human", intensity: 0, isBaseline: true, source: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", sourceLabel: "NHTSA" },
+  { nines: 6.1, miles: 1350000,   label: "Waymo",           sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", intensity: 1, source: "https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786", sourceLabel: "Kusano et al. 2025" },
+  { nines: 7.7, miles: 50000000,  label: "Waymo",           sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", intensity: 2, source: "https://waymo.com/safety/impact", sourceLabel: "Waymo Safety" },
+  { nines: 7.9, miles: 86000000,  label: "Human Fatal",     sublabel: "Fatal crash rate only",       event: "fatal crash",    category: "human", intensity: 1, isBaseline: true, source: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", sourceLabel: "NHTSA" },
 ];
+
+NINES_SCALE_DATA.forEach(function(d) { d.color = CAT_COLORS[d.category][d.intensity]; });
 
 const TARGET_THRESHOLDS = [
   { nines: 5.7, label: "Match human average", description: "System matches avg human crash rate", color: "#fbbf24" },
@@ -52,6 +77,20 @@ const formatMiles = (n) => {
   if (n >= 1000) return (n / 1000).toFixed(0) + "K";
   return n.toString();
 };
+
+// Human-relative framing: "3.2× safer" / "360× worse" / "Match". The human baseline
+// (5.7 nines = NHTSA all-crash rate) is the anchor the hero chart references.
+function relToHuman(nines) {
+  const human = 5.7;
+  const diff = nines - human;
+  if (Math.abs(diff) < 0.05) return { text: "Match", sign: 0 };
+  const mul = Math.pow(10, Math.abs(diff));
+  const fmt = mul >= 100 ? Math.round(mul) : mul >= 10 ? mul.toFixed(0) : mul.toFixed(1);
+  return {
+    text: fmt + "× " + (diff > 0 ? "safer" : "worse"),
+    sign: diff > 0 ? 1 : -1,
+  };
+}
 
 const yearsPerCrash = (miles, annual) => {
   annual = annual || 14000;
@@ -89,6 +128,43 @@ function Note({ children }) {
       lineHeight: 1.65, marginTop: "16px",
     }}>
       <span style={{ color: "#60a5fa", fontWeight: 600, fontSize: "11px" }}>NOTE </span>{children}
+    </div>
+  );
+}
+
+function NinesTooltip({ data }) {
+  if (!data) return null;
+  const r = relToHuman(data.nines);
+  const signColor = r.sign > 0 ? "oklch(0.75 0.15 155)" : r.sign < 0 ? "oklch(0.70 0.17 25)" : "#cbd5e1";
+  return (
+    <div style={{
+      background: "rgba(12,12,22,0.96)",
+      border: "1px solid rgba(255,255,255,0.10)",
+      borderRadius: "10px", padding: "12px 14px",
+      minWidth: "220px", maxWidth: "280px",
+      boxShadow: "0 12px 32px rgba(0,0,0,0.55)",
+      backdropFilter: "blur(8px)",
+      pointerEvents: "auto",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+        <div style={{ width: "8px", height: "8px", borderRadius: "4px", background: data.color }} />
+        <div style={{ fontSize: "13px", fontWeight: 600, color: "#e8ecf2" }}>{data.label}</div>
+      </div>
+      <div style={{ fontSize: "11px", color: "#8b94a5", marginBottom: "10px", lineHeight: 1.45 }}>{data.sublabel}</div>
+      <div style={{ display: "flex", gap: "18px", marginBottom: "10px" }}>
+        <div>
+          <div style={{ fontSize: "9px", color: "#5a6376", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: FONTS }}>Miles / {data.event}</div>
+          <div style={{ fontSize: "18px", fontWeight: 700, color: "#e8ecf2", fontFamily: FONTS }}>{formatMiles(data.miles)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: "9px", color: "#5a6376", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: FONTS }}>vs Human</div>
+          <div style={{ fontSize: "18px", fontWeight: 700, color: signColor, fontFamily: FONTS }}>{r.text}</div>
+        </div>
+      </div>
+      <a href={data.source} target="_blank" rel="noopener noreferrer" style={{
+        fontSize: "11px", color: "oklch(0.72 0.12 235)", fontFamily: FONTS,
+        textDecoration: "none", borderBottom: "1px dotted oklch(0.72 0.12 235 / 0.4)",
+      }}>Source: {data.sourceLabel} ↗</a>
     </div>
   );
 }
@@ -156,7 +232,22 @@ function Nav({ active, onChange }) {
 
 function NinesScale() {
   const [anim, setAnim] = useState(false);
+  const [hover, setHover] = useState(null);
+  const closeTimer = useRef(null);
   useEffect(function() { var t = setTimeout(function() { setAnim(true); }, 80); return function() { clearTimeout(t); }; }, []);
+
+  // Hover handlers — tooltip stays alive while cursor is on the tip, so users can click the source link.
+  var onEnterDot = function(data, x, y) {
+    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; }
+    setHover({ data: data, x: x, y: y });
+  };
+  var onLeaveDot = function() {
+    closeTimer.current = setTimeout(function() { setHover(null); }, 180);
+  };
+  var onEnterTip = function() {
+    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; }
+  };
+  var onLeaveTip = function() { setHover(null); };
 
   var scaleMax = 8.5;
   var pct = function(n) { return Math.min(100, Math.max(0, (n / scaleMax) * 100)); };
@@ -185,143 +276,172 @@ function NinesScale() {
         <StatCard label="Gap: Tesla to unsupervised" value="~460x" sublabel="vs. Elluswamy 670K mi target" accent="#ef4444" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
       </div>
 
-      {/* Progress chart — dot plot */}
-      <Section title="Progress toward autonomous driving" subtitle="Each system plotted on the nines scale — dashed lines mark key thresholds.">
+      {/* Hero chart — Horizon dot plot. Human baseline is a horizontal horizon; systems plot
+          above (safer) or below (worse). Vertical distance from the horizon reads at a glance. */}
+      <Section
+        title="Progress toward autonomous driving"
+        subtitle="Plotted by miles between events on a log scale — each decade is a 10× improvement. Events aren't all the same: disengagements, crashes, injuries, or fatalities — event type is shown per dot. Hover any dot for source."
+      >
         {(function() {
-          var chartW = 960; // fixed inner width in px
-          var dotY = 36;
-          var labelW = 100; // label column width for overlap calc
-          var numRows = 4;
+          var W = 960, H = 440;
+          var padL = 60, padR = 50;
+          var plotW = W - padL - padR;
+          var axisY = 230;
+          var xMax = 8.5;
+          var xOf = function(n) { return padL + (n / xMax) * plotW; };
 
-          // Assign stagger rows: track last used x per row, pick first non-overlapping row
-          var points = sorted.map(function(d) {
-            return { nines: d.nines, miles: d.miles, label: d.label, sublabel: d.sublabel, color: d.color, row: 0 };
-          });
-          var lastXByRow = [];
-          for (var r = 0; r < numRows; r++) lastXByRow.push(-Infinity);
-          for (var i = 0; i < points.length; i++) {
-            var xPx = (points[i].nines / scaleMax) * chartW;
-            var placed = false;
-            for (var row = 0; row < numRows; row++) {
-              if (xPx - lastXByRow[row] >= labelW) {
-                points[i].row = row;
-                lastXByRow[row] = xPx;
-                placed = true;
-                break;
-              }
-            }
-            if (!placed) {
-              // fallback: pick row with largest gap
-              var bestRow = 0; var bestGap = -Infinity;
-              for (var row = 0; row < numRows; row++) {
-                var gap = xPx - lastXByRow[row];
-                if (gap > bestGap) { bestGap = gap; bestRow = row; }
-              }
-              points[i].row = bestRow;
-              lastXByRow[bestRow] = xPx;
-            }
-          }
+          var below = sorted.filter(function(d) { return d.nines < 5.7; });
+          var match = sorted.filter(function(d) { return Math.abs(d.nines - 5.7) < 0.05; });
+          var above = sorted.filter(function(d) { return d.nines > 5.75; });
 
-          var labelOffsets = [24, 72, 120, 168]; // px below dot per stagger row
-          var maxOffset = labelOffsets[numRows - 1];
-          var chartHeight = dotY + maxOffset + 52 + 12; // dot area + deepest label + text height + threshold stagger
+          var rowGap = 30;
+          var belowRow0 = axisY + 46;
+          var aboveRow0 = axisY - 46;
+          var belowLabels = below.map(function(d, i) { return Object.assign({}, d, { labelY: belowRow0 + i * rowGap }); });
+          var aboveLabels = above.map(function(d, i) { return Object.assign({}, d, { labelY: aboveRow0 - (above.length - 1 - i) * rowGap }); });
+
+          // Hit targets split at neighbour midpoints so adjacent dots don't steal each other's hover.
+          var hitHalf = function(arr) {
+            return arr.map(function(d, i) {
+              var dx = xOf(d.nines);
+              var leftX = i > 0 ? xOf(arr[i - 1].nines) : padL;
+              var rightX = i < arr.length - 1 ? xOf(arr[i + 1].nines) : padL + plotW;
+              return {
+                left: Math.min(22, Math.max(10, (dx - leftX) / 2)),
+                right: Math.min(22, Math.max(10, (rightX - dx) / 2)),
+              };
+            });
+          };
+          var belowHits = hitHalf(belowLabels);
+          var aboveHits = hitHalf(aboveLabels);
 
           return (
             <div style={{
-              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: "10px", padding: "20px 0 16px", overflowX: "auto", WebkitOverflowScrolling: "touch",
+              background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: "14px", padding: "12px",
             }}>
-              <div style={{ position: "relative", height: chartHeight + "px", minWidth: chartW + "px", margin: "0 28px" }}>
-                {/* Axis line */}
-                <div style={{
-                  position: "absolute", top: dotY + "px", left: 0, right: 0, height: "1px",
-                  background: "rgba(255,255,255,0.1)",
-                }} />
+              <div style={{ position: "relative" }}>
+                <svg viewBox={"0 0 " + W + " " + H} style={{ width: "100%", height: "auto", display: "block" }}>
+                  <defs>
+                    <linearGradient id="v1safe" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="oklch(0.68 0.14 155)" stopOpacity="0" />
+                      <stop offset="100%" stopColor="oklch(0.68 0.14 155)" stopOpacity="0.10" />
+                    </linearGradient>
+                    <linearGradient id="v1danger" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="oklch(0.70 0.16 30)" stopOpacity="0" />
+                      <stop offset="100%" stopColor="oklch(0.70 0.16 30)" stopOpacity="0.08" />
+                    </linearGradient>
+                  </defs>
 
-                {/* Axis ticks — show miles at each nines integer */}
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(function(n) {
-                  var milesAtTick = n === 0 ? "1" : formatMiles(Math.pow(10, n));
-                  return (
-                    <div key={n} style={{ position: "absolute", left: pct(n) + "%", top: dotY - 14 + "px" }}>
-                      <div style={{
-                        position: "absolute", left: "-1px", top: "14px", width: "1px", height: "6px",
-                        background: "rgba(255,255,255,0.12)",
-                      }} />
-                      <div style={{
-                        position: "absolute", left: "0", transform: "translateX(-50%)",
-                        fontSize: "9px", color: "#4b5563", fontFamily: FONTS, whiteSpace: "nowrap",
-                      }}>{milesAtTick}</div>
-                    </div>
-                  );
-                })}
+                  <rect x={padL} y={20} width={plotW} height={axisY - 20} fill="url(#v1safe)" />
+                  <rect x={padL} y={axisY} width={plotW} height={H - axisY - 30} fill="url(#v1danger)" />
 
-                {/* Axis label */}
-                <div style={{
-                  position: "absolute", top: dotY - 28 + "px", left: "50%", transform: "translateX(-50%)",
-                  fontSize: "9px", color: "#374151", fontFamily: FONTS, letterSpacing: "0.05em",
-                  whiteSpace: "nowrap",
-                }}>MILES PER EVENT (log scale)</div>
+                  <line x1={padL} x2={padL + plotW} y1={axisY} y2={axisY}
+                        stroke="oklch(0.75 0.02 260)" strokeWidth="1.5" />
 
-                {/* Target threshold lines */}
-                {TARGET_THRESHOLDS.map(function(t, ti) {
-                  var thresholdStagger = [0, 10, 20, 30]; // stagger bottom labels so they don't overlap
-                  return (
-                    <div key={t.nines} style={{
-                      position: "absolute", left: pct(t.nines) + "%", top: dotY - 6 + "px",
-                      width: "0px", height: maxOffset + 52 + thresholdStagger[ti] + "px",
-                      borderLeft: "1px dashed " + t.color, opacity: 0.3,
-                    }}>
-                      <div style={{
-                        position: "absolute", bottom: "2px",
-                        left: "6px", whiteSpace: "nowrap",
-                        fontSize: "8px", color: t.color, fontFamily: FONTS, opacity: 0.8,
-                        letterSpacing: "0.02em",
-                      }}>{formatMiles(Math.pow(10, t.nines))} mi — {t.label}</div>
-                    </div>
-                  );
-                })}
+                  <line x1={xOf(5.7)} x2={xOf(5.7)} y1={20} y2={H - 30}
+                        stroke="oklch(0.75 0.02 260)" strokeWidth="1" strokeDasharray="3 4" opacity="0.55" />
+                  <text x={xOf(5.7)} y={14} textAnchor="middle" fontFamily={FONTS} fontSize="9"
+                        fill="oklch(0.82 0.02 260)" letterSpacing="0.12em" fontWeight="700">HUMAN AVG</text>
 
-                {/* Data points */}
-                {points.map(function(d, i) {
-                  var x = pct(d.nines);
-                  var labelTop = dotY + labelOffsets[d.row];
-                  return (
-                    <div key={i}>
-                      {/* Connecting line from dot to label */}
-                      <div style={{
-                        position: "absolute", left: x + "%", top: dotY + 6 + "px",
-                        width: "0px", height: labelOffsets[d.row] - 8 + "px",
-                        borderLeft: "1px solid " + d.color, opacity: 0.2,
-                      }} />
-                      {/* Dot */}
-                      <div style={{
-                        position: "absolute", left: "calc(" + x + "% - 5px)", top: dotY - 5 + "px",
-                        width: "10px", height: "10px", borderRadius: "50%",
-                        background: d.color, boxShadow: "0 0 8px " + d.color + "50",
-                        opacity: anim ? 1 : 0, transform: anim ? "scale(1)" : "scale(0)",
-                        transition: "all 0.4s ease " + (i * 60) + "ms",
-                        zIndex: 2,
-                      }} />
-                      {/* Label */}
-                      <div style={{
-                        position: "absolute", left: x + "%", top: labelTop + "px",
-                        transform: "translateX(-50%)", textAlign: "center",
-                        opacity: anim ? 1 : 0, transition: "opacity 0.4s ease " + (i * 60 + 200) + "ms",
-                        zIndex: 1, width: labelW - 6 + "px",
-                      }}>
-                        <div style={{ fontSize: "12px", fontWeight: 700, color: d.color, fontFamily: FONTS, lineHeight: 1.1 }}>
-                          {formatMiles(d.miles)} mi
-                        </div>
-                        <div style={{ fontSize: "10px", fontWeight: 600, color: "#cbd5e1", lineHeight: 1.2, marginTop: "2px" }}>
+                  <text x={padL + 6} y={30} fontFamily={FONTS} fontSize="9"
+                        fill="oklch(0.68 0.14 155)" letterSpacing="0.12em" opacity="0.7" fontWeight="700">SAFER THAN HUMANS</text>
+                  <text x={padL + 6} y={H - 18} fontFamily={FONTS} fontSize="9"
+                        fill="oklch(0.70 0.16 30)" letterSpacing="0.12em" opacity="0.7" fontWeight="700">WORSE THAN HUMANS</text>
+
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(function(n) {
+                    var m = Math.pow(10, n);
+                    var miLabel = n >= 6 ? (m / 1000000) + "M mi" : n >= 3 ? (m / 1000) + "K mi" : m + " mi";
+                    return (
+                      <g key={n}>
+                        <line x1={xOf(n)} x2={xOf(n)} y1={axisY - 4} y2={axisY + 4} stroke="rgba(255,255,255,0.15)" />
+                        <text x={xOf(n)} y={axisY - 10} textAnchor="middle" fontFamily={FONTS} fontSize="9" fill="#64748b" fontWeight="600">{miLabel}</text>
+                      </g>
+                    );
+                  })}
+
+                  {match.map(function(d, i) {
+                    var dx = xOf(d.nines);
+                    return (
+                      <g key={"m" + i}
+                         onMouseEnter={function() { onEnterDot(d, dx, axisY); }}
+                         onMouseLeave={onLeaveDot}
+                         style={{ cursor: "pointer" }}>
+                        <rect x={dx - 14} y={axisY - 16} width={28} height={32} fill="transparent" />
+                        <circle cx={dx} cy={axisY} r="11" fill={d.color} opacity={anim ? 0.25 : 0} style={{ transition: "opacity 0.4s ease " + (i * 60) + "ms" }} pointerEvents="none" />
+                        <circle cx={dx} cy={axisY} r={anim ? 6 : 0} fill={d.color} stroke="#0a0a0f" strokeWidth="2" style={{ transition: "r 0.4s ease " + (i * 60) + "ms" }} pointerEvents="none" />
+                      </g>
+                    );
+                  })}
+
+                  {belowLabels.map(function(d, i) {
+                    var dx = xOf(d.nines);
+                    var dy = axisY;
+                    var ly = d.labelY;
+                    return (
+                      <g key={"b" + i} style={{ opacity: anim ? 1 : 0, transition: "opacity 0.4s ease " + (i * 60 + 200) + "ms" }}>
+                        <line x1={dx} y1={dy + 10} x2={dx} y2={ly - 4} stroke={d.color} strokeWidth="0.8" opacity="0.4" pointerEvents="none" />
+                        <g onMouseEnter={function() { onEnterDot(d, dx, dy); }}
+                           onMouseLeave={onLeaveDot}
+                           style={{ cursor: "pointer" }}>
+                          <rect x={dx - belowHits[i].left} y={dy - 18}
+                                width={belowHits[i].left + belowHits[i].right}
+                                height={(ly - dy) + 30} fill="transparent" />
+                          <circle cx={dx} cy={dy} r="10" fill={d.color} opacity="0.20" pointerEvents="none" />
+                          <circle cx={dx} cy={dy} r="5" fill={d.color} stroke="#0a0a0f" strokeWidth="1.5" pointerEvents="none" />
+                        </g>
+                        <text x={dx} y={ly} textAnchor="middle" fontFamily={BODY} fontSize="11" fontWeight="600" fill={d.color} pointerEvents="none">
                           {d.label}
-                        </div>
-                        <div style={{ fontSize: "9px", color: "#4b5563", lineHeight: 1.2 }}>
-                          {d.sublabel}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                          <tspan fontFamily={FONTS} fontSize="10" fill="#8b94a5" fontWeight="500"> · {formatMiles(d.miles)} mi / {d.event}</tspan>
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {aboveLabels.map(function(d, i) {
+                    var dx = xOf(d.nines);
+                    var dy = axisY;
+                    var ly = d.labelY;
+                    return (
+                      <g key={"a" + i} style={{ opacity: anim ? 1 : 0, transition: "opacity 0.4s ease " + (i * 60 + 200) + "ms" }}>
+                        <line x1={dx} y1={dy - 10} x2={dx} y2={ly + 4} stroke={d.color} strokeWidth="0.8" opacity="0.4" pointerEvents="none" />
+                        <g onMouseEnter={function() { onEnterDot(d, dx, dy); }}
+                           onMouseLeave={onLeaveDot}
+                           style={{ cursor: "pointer" }}>
+                          <rect x={dx - aboveHits[i].left} y={ly - 18}
+                                width={aboveHits[i].left + aboveHits[i].right}
+                                height={(dy - ly) + 32} fill="transparent" />
+                          <circle cx={dx} cy={dy} r="10" fill={d.color} opacity="0.20" pointerEvents="none" />
+                          <circle cx={dx} cy={dy} r="5" fill={d.color} stroke="#0a0a0f" strokeWidth="1.5" pointerEvents="none" />
+                        </g>
+                        <text x={dx} y={ly} textAnchor="middle" fontFamily={BODY} fontSize="11" fontWeight="600" fill={d.color} pointerEvents="none">
+                          {d.label}
+                          <tspan fontFamily={FONTS} fontSize="10" fill="#8b94a5" fontWeight="500"> · {formatMiles(d.miles)} mi / {d.event}</tspan>
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  <text x={padL + plotW / 2} y={H - 4} textAnchor="middle" fontFamily={FONTS} fontSize="9" fill="#4b5563" letterSpacing="0.14em">
+                    MILES BETWEEN EVENTS (LOG SCALE) · EVENT TYPE LISTED PER ROW
+                  </text>
+                </svg>
+
+                {hover && (
+                  <div
+                    onMouseEnter={onEnterTip}
+                    onMouseLeave={onLeaveTip}
+                    style={{
+                      position: "absolute",
+                      left: (hover.x / W) * 100 + "%",
+                      top: (hover.y / H) * 100 + "%",
+                      transform: "translate(14px, -100%)",
+                      zIndex: 50,
+                    }}
+                  >
+                    <NinesTooltip data={hover.data} />
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -457,18 +577,16 @@ function NinesScale() {
       </div>
 
       {/* Legend */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "12px", justifyContent: "center" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "18px", marginTop: "12px", justifyContent: "center" }}>
         {[
-          { color: "#ef4444", label: "Tesla (independent)" },
-          { color: "#fbbf24", label: "Tesla (crowdsourced)" },
-          { color: "#f59e0b", label: "Tesla Robotaxi" },
-          { color: "#3b82f6", label: "Waymo" },
-          { color: "#a3a3a3", label: "Human baseline" },
+          { color: "oklch(0.72 0.16 55)", label: "Tesla" },
+          { color: "oklch(0.62 0.16 245)", label: "Waymo" },
+          { color: "oklch(0.65 0.02 260)", label: "Human baseline" },
         ].map(function(l, i) {
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: l.color }} />
-              <span style={{ fontSize: "10px", color: "#64748b" }}>{l.label}</span>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+              <div style={{ width: "9px", height: "9px", borderRadius: "5px", background: l.color }} />
+              <span style={{ fontSize: "11px", color: "#8b94a5", fontFamily: FONTS, letterSpacing: "0.02em" }}>{l.label}</span>
             </div>
           );
         })}
