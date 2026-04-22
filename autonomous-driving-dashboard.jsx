@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend, ReferenceLine } from "recharts";
 
 // ============================================================
@@ -148,43 +148,6 @@ function Note({ children }) {
   );
 }
 
-function NinesTooltip({ data }) {
-  if (!data) return null;
-  const r = relToHuman(data.nines);
-  const signColor = r.sign > 0 ? "oklch(0.75 0.15 155)" : r.sign < 0 ? "oklch(0.70 0.17 25)" : "#cbd5e1";
-  return (
-    <div style={{
-      background: "rgba(12,12,22,0.96)",
-      border: "1px solid rgba(255,255,255,0.10)",
-      borderRadius: "10px", padding: "12px 14px",
-      minWidth: "220px", maxWidth: "280px",
-      boxShadow: "0 12px 32px rgba(0,0,0,0.55)",
-      backdropFilter: "blur(8px)",
-      pointerEvents: "auto",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-        <div style={{ width: "8px", height: "8px", borderRadius: "4px", background: data.color }} />
-        <div style={{ fontSize: "13px", fontWeight: 600, color: "#e8ecf2" }}>{data.label}</div>
-      </div>
-      <div style={{ fontSize: "11px", color: "#8b94a5", marginBottom: "10px", lineHeight: 1.45 }}>{data.sublabel}</div>
-      <div style={{ display: "flex", gap: "18px", marginBottom: "10px" }}>
-        <div>
-          <div style={{ fontSize: "9px", color: "#5a6376", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: FONTS }}>Miles / {data.event}</div>
-          <div style={{ fontSize: "18px", fontWeight: 700, color: "#e8ecf2", fontFamily: FONTS }}>{formatMiles(data.miles)}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: "9px", color: "#5a6376", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: FONTS }}>vs Human</div>
-          <div style={{ fontSize: "18px", fontWeight: 700, color: signColor, fontFamily: FONTS }}>{r.text}</div>
-        </div>
-      </div>
-      <a href={data.source} target="_blank" rel="noopener noreferrer" style={{
-        fontSize: "11px", color: "oklch(0.72 0.12 235)", fontFamily: FONTS,
-        textDecoration: "none", borderBottom: "1px dotted oklch(0.72 0.12 235 / 0.4)",
-      }}>Source: {data.sourceLabel} ↗</a>
-    </div>
-  );
-}
-
 function StatCard({ label, value, sublabel, accent, sourceHref, sourceText }) {
   accent = accent || "#60a5fa";
   return (
@@ -248,42 +211,10 @@ function Nav({ active, onChange }) {
 
 function NinesScale() {
   const [anim, setAnim] = useState(false);
-  const [hover, setHover] = useState(null);
   const narrow = useNarrow();
-  const closeTimer = useRef(null);
   useEffect(function() { var t = setTimeout(function() { setAnim(true); }, 80); return function() { clearTimeout(t); }; }, []);
 
-  // Hover handlers — tooltip stays alive while cursor is on the tip, so users can click the source link.
-  // Only the hero chart uses hover; the ladder below is display-only.
-  var onEnterDot = function(data, x, y) {
-    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; }
-    setHover({ data: data, x: x, y: y });
-  };
-  var onLeaveDot = function() {
-    closeTimer.current = setTimeout(function() { setHover(null); }, 180);
-  };
-  var onEnterTip = function() {
-    if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; }
-  };
-  var onLeaveTip = function() { setHover(null); };
-
   var scaleMax = 8.5;
-  var pct = function(n) { return Math.min(100, Math.max(0, (n / scaleMax) * 100)); };
-  var sorted = NINES_SCALE_DATA.slice().sort(function(a, b) { return a.nines - b.nines; });
-
-  var zoneColor = function(n) {
-    if (n < 3.5) return "#ef4444";
-    if (n < 5.0) return "#f59e0b";
-    if (n < 5.7) return "#eab308";
-    return "#22c55e";
-  };
-
-  var zoneLabel = function(n) {
-    if (n < 3.5) return "DANGEROUS";
-    if (n < 5.0) return "SUPERVISED ONLY";
-    if (n < 5.7) return "APPROACHING HUMAN";
-    return "SUPERHUMAN";
-  };
 
   return (
     <div>
@@ -294,178 +225,10 @@ function NinesScale() {
         <StatCard label="Gap: Tesla to unsupervised" value="~460×" sublabel="vs. Elluswamy 670K mi target" accent="#ef4444" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
       </div>
 
-      {/* Hero chart — Horizon dot plot. Human baseline is a horizontal horizon; systems plot
-          above (safer) or below (worse). Vertical distance from the horizon reads at a glance. */}
       <Section
         title="Progress toward autonomous driving"
-        subtitle="Plotted by miles between events on a log scale — each decade is a 10× improvement. Events aren't all the same: disengagements, crashes, injuries, or fatalities — event type is shown per dot. Hover any dot for source."
+        subtitle="Ranked safest-first on a log scale of miles between events. Each decade on the bar is a 10× improvement. Events aren't all the same — disengagements, crashes, injuries, or fatalities — so the event type is shown on every row."
       >
-        {(function() {
-          var W = 960, H = 440;
-          var padL = 60, padR = 50;
-          var plotW = W - padL - padR;
-          var axisY = 230;
-          var xMax = 8.5;
-          var xOf = function(n) { return padL + (n / xMax) * plotW; };
-
-          var below = sorted.filter(function(d) { return d.nines < 5.7; });
-          var match = sorted.filter(function(d) { return Math.abs(d.nines - 5.7) < 0.05; });
-          var above = sorted.filter(function(d) { return d.nines > 5.75; });
-
-          var rowGap = 30;
-          var belowRow0 = axisY + 46;
-          var aboveRow0 = axisY - 46;
-          var belowLabels = below.map(function(d, i) { return Object.assign({}, d, { labelY: belowRow0 + i * rowGap }); });
-          var aboveLabels = above.map(function(d, i) { return Object.assign({}, d, { labelY: aboveRow0 - (above.length - 1 - i) * rowGap }); });
-
-          // Hit targets split at neighbour midpoints so adjacent dots don't steal each other's hover.
-          var hitHalf = function(arr) {
-            return arr.map(function(d, i) {
-              var dx = xOf(d.nines);
-              var leftX = i > 0 ? xOf(arr[i - 1].nines) : padL;
-              var rightX = i < arr.length - 1 ? xOf(arr[i + 1].nines) : padL + plotW;
-              return {
-                left: Math.min(22, Math.max(10, (dx - leftX) / 2)),
-                right: Math.min(22, Math.max(10, (rightX - dx) / 2)),
-              };
-            });
-          };
-          var belowHits = hitHalf(belowLabels);
-          var aboveHits = hitHalf(aboveLabels);
-
-          return (
-            <div style={{
-              background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: "14px", padding: "12px",
-            }}>
-              <div style={{ position: "relative" }}>
-                <svg viewBox={"0 0 " + W + " " + H} style={{ width: "100%", height: "auto", display: "block" }}>
-                  <defs>
-                    <linearGradient id="v1safe" x1="0" y1="1" x2="0" y2="0">
-                      <stop offset="0%" stopColor="oklch(0.68 0.14 155)" stopOpacity="0" />
-                      <stop offset="100%" stopColor="oklch(0.68 0.14 155)" stopOpacity="0.10" />
-                    </linearGradient>
-                    <linearGradient id="v1danger" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="oklch(0.70 0.16 30)" stopOpacity="0" />
-                      <stop offset="100%" stopColor="oklch(0.70 0.16 30)" stopOpacity="0.08" />
-                    </linearGradient>
-                  </defs>
-
-                  <rect x={padL} y={20} width={plotW} height={axisY - 20} fill="url(#v1safe)" />
-                  <rect x={padL} y={axisY} width={plotW} height={H - axisY - 30} fill="url(#v1danger)" />
-
-                  <line x1={padL} x2={padL + plotW} y1={axisY} y2={axisY}
-                        stroke="oklch(0.75 0.02 260)" strokeWidth="1.5" />
-
-                  <line x1={xOf(5.7)} x2={xOf(5.7)} y1={20} y2={H - 30}
-                        stroke="oklch(0.75 0.02 260)" strokeWidth="1" strokeDasharray="3 4" opacity="0.55" />
-                  <text x={xOf(5.7)} y={14} textAnchor="middle" fontFamily={FONTS} fontSize="9"
-                        fill="oklch(0.82 0.02 260)" letterSpacing="0.12em" fontWeight="700">HUMAN AVG</text>
-
-                  <text x={padL + 6} y={30} fontFamily={FONTS} fontSize="9"
-                        fill="oklch(0.68 0.14 155)" letterSpacing="0.12em" opacity="0.7" fontWeight="700">SAFER THAN HUMANS</text>
-                  <text x={padL + 6} y={H - 18} fontFamily={FONTS} fontSize="9"
-                        fill="oklch(0.70 0.16 30)" letterSpacing="0.12em" opacity="0.7" fontWeight="700">WORSE THAN HUMANS</text>
-
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map(function(n) {
-                    var m = Math.pow(10, n);
-                    var miLabel = n >= 6 ? (m / 1000000) + "M mi" : n >= 3 ? (m / 1000) + "K mi" : m + " mi";
-                    return (
-                      <g key={n}>
-                        <line x1={xOf(n)} x2={xOf(n)} y1={axisY - 4} y2={axisY + 4} stroke="rgba(255,255,255,0.15)" />
-                        <text x={xOf(n)} y={axisY - 10} textAnchor="middle" fontFamily={FONTS} fontSize="9" fill="#64748b" fontWeight="600">{miLabel}</text>
-                      </g>
-                    );
-                  })}
-
-                  {match.map(function(d, i) {
-                    var dx = xOf(d.nines);
-                    return (
-                      <g key={"m" + i}
-                         onMouseEnter={function() { onEnterDot(d, dx, axisY); }}
-                         onMouseLeave={onLeaveDot}
-                         style={{ cursor: "pointer" }}>
-                        <rect x={dx - 14} y={axisY - 16} width={28} height={32} fill="transparent" />
-                        <circle cx={dx} cy={axisY} r="11" fill={d.color} opacity={anim ? 0.25 : 0} style={{ transition: "opacity 0.4s ease " + (i * 60) + "ms" }} pointerEvents="none" />
-                        <circle cx={dx} cy={axisY} r={anim ? 6 : 0} fill={d.color} stroke="#0a0a0f" strokeWidth="2" style={{ transition: "r 0.4s ease " + (i * 60) + "ms" }} pointerEvents="none" />
-                      </g>
-                    );
-                  })}
-
-                  {belowLabels.map(function(d, i) {
-                    var dx = xOf(d.nines);
-                    var dy = axisY;
-                    var ly = d.labelY;
-                    return (
-                      <g key={"b" + i} style={{ opacity: anim ? 1 : 0, transition: "opacity 0.4s ease " + (i * 60 + 200) + "ms" }}>
-                        <line x1={dx} y1={dy + 10} x2={dx} y2={ly - 4} stroke={d.color} strokeWidth="0.8" opacity="0.4" pointerEvents="none" />
-                        <g onMouseEnter={function() { onEnterDot(d, dx, dy); }}
-                           onMouseLeave={onLeaveDot}
-                           style={{ cursor: "pointer" }}>
-                          <rect x={dx - belowHits[i].left} y={dy - 18}
-                                width={belowHits[i].left + belowHits[i].right}
-                                height={(ly - dy) + 30} fill="transparent" />
-                          <circle cx={dx} cy={dy} r="10" fill={d.color} opacity="0.20" pointerEvents="none" />
-                          <circle cx={dx} cy={dy} r="5" fill={d.color} stroke="#0a0a0f" strokeWidth="1.5" pointerEvents="none" />
-                        </g>
-                        <text x={dx} y={ly} textAnchor="middle" fontFamily={BODY} fontSize="11" fontWeight="600" fill={d.color} pointerEvents="none">
-                          {d.label}
-                          <tspan fontFamily={FONTS} fontSize="10" fill="#8b94a5" fontWeight="500"> · {formatMiles(d.miles)} mi / {d.event}</tspan>
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  {aboveLabels.map(function(d, i) {
-                    var dx = xOf(d.nines);
-                    var dy = axisY;
-                    var ly = d.labelY;
-                    return (
-                      <g key={"a" + i} style={{ opacity: anim ? 1 : 0, transition: "opacity 0.4s ease " + (i * 60 + 200) + "ms" }}>
-                        <line x1={dx} y1={dy - 10} x2={dx} y2={ly + 4} stroke={d.color} strokeWidth="0.8" opacity="0.4" pointerEvents="none" />
-                        <g onMouseEnter={function() { onEnterDot(d, dx, dy); }}
-                           onMouseLeave={onLeaveDot}
-                           style={{ cursor: "pointer" }}>
-                          <rect x={dx - aboveHits[i].left} y={ly - 18}
-                                width={aboveHits[i].left + aboveHits[i].right}
-                                height={(dy - ly) + 32} fill="transparent" />
-                          <circle cx={dx} cy={dy} r="10" fill={d.color} opacity="0.20" pointerEvents="none" />
-                          <circle cx={dx} cy={dy} r="5" fill={d.color} stroke="#0a0a0f" strokeWidth="1.5" pointerEvents="none" />
-                        </g>
-                        <text x={dx} y={ly} textAnchor="middle" fontFamily={BODY} fontSize="11" fontWeight="600" fill={d.color} pointerEvents="none">
-                          {d.label}
-                          <tspan fontFamily={FONTS} fontSize="10" fill="#8b94a5" fontWeight="500"> · {formatMiles(d.miles)} mi / {d.event}</tspan>
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  <text x={padL + plotW / 2} y={H - 4} textAnchor="middle" fontFamily={FONTS} fontSize="9" fill="#4b5563" letterSpacing="0.14em">
-                    MILES BETWEEN EVENTS (LOG SCALE) · EVENT TYPE LISTED PER ROW
-                  </text>
-                </svg>
-
-                {hover && (
-                  <div
-                    onMouseEnter={onEnterTip}
-                    onMouseLeave={onLeaveTip}
-                    style={{
-                      position: "absolute",
-                      left: (hover.x / W) * 100 + "%",
-                      top: (hover.y / H) * 100 + "%",
-                      transform: "translate(14px, -100%)",
-                      zIndex: 50,
-                    }}
-                  >
-                    <NinesTooltip data={hover.data} />
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-      </Section>
-
       {/* Ranked ladder — safest first. Bar length encodes log miles; each row shows an explicit
           ×-vs-human delta. Labels flip left of the dot for high-pct rows to avoid overlap with
           the vs-Human column on the right. */}
@@ -545,10 +308,12 @@ function NinesScale() {
                       transition: "opacity 0.4s ease " + (i * 50) + "ms, transform 0.4s ease " + (i * 50) + "ms",
                     }}
                   >
-                    {/* Label column */}
+                    {/* Label column — system, sublabel, and source link in parens. */}
                     <div>
                       <div style={{ fontSize: "12px", fontWeight: 600, color: d.color, lineHeight: 1.2 }}>{d.label}</div>
-                      <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>{d.sublabel}</div>
+                      <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px", lineHeight: 1.35 }}>
+                        {d.sublabel} <span style={{ color: "#374151" }}>(<Src href={d.source}>{d.sourceLabel}</Src>)</span>
+                      </div>
                     </div>
 
                     {/* vs Human delta — rendered second in DOM so it sits in col 2 row 1 of the
@@ -560,58 +325,73 @@ function NinesScale() {
                       }}>{rel.text}</div>
                     )}
 
-                    {/* Bar — full width on narrow (spans both columns on row 2), middle column on wide */}
+                    {/* Bar cell — full width on narrow (spans both columns on row 2), middle column on wide.
+                        At narrow widths the inline mile/event label moves to its own line BELOW the bar so
+                        no row pct can squeeze it into overflow on either side. */}
                     <div style={{
-                      position: "relative", height: "22px",
                       gridColumn: narrow ? "1 / -1" : "auto",
                     }}>
-                      {/* Baseline track */}
-                      <div style={{
-                        position: "absolute", left: 0, right: 0, top: "10px", height: "2px",
-                        background: "rgba(255,255,255,0.04)", borderRadius: "1px",
-                      }} />
-                      {/* Human rule */}
-                      <div style={{
-                        position: "absolute", left: (human / scaleMax) * 100 + "%",
-                        top: "2px", bottom: "2px", width: "1px",
-                        background: "oklch(0.65 0.02 260 / 0.45)",
-                      }} />
-                      {/* Bar fill */}
-                      <div style={{
-                        position: "absolute", left: 0, top: "9px",
-                        width: (anim ? barPct : 0) + "%", height: "4px", borderRadius: "2px",
-                        background: "linear-gradient(90deg, " + d.color + "20, " + d.color + ")",
-                        transition: "width 0.7s ease " + (i * 50 + 150) + "ms",
-                      }} />
-                      {/* Dot at end of bar */}
-                      <div style={{
-                        position: "absolute",
-                        left: "calc(" + (anim ? barPct : 0) + "% - 6px)", top: "5px",
-                        width: "12px", height: "12px", borderRadius: "6px",
-                        background: d.color,
-                        boxShadow: "0 0 0 3px " + d.color + "22",
-                        transition: "left 0.7s ease " + (i * 50 + 150) + "ms",
-                      }} />
-                      {/* Inline miles / event label — right of dot for short bars, left of dot for long bars
-                          so the text never runs into the vs-Human column on the right. */}
-                      {labelOnLeft ? (
+                      <div style={{ position: "relative", height: "22px" }}>
+                        {/* Baseline track */}
+                        <div style={{
+                          position: "absolute", left: 0, right: 0, top: "10px", height: "2px",
+                          background: "rgba(255,255,255,0.04)", borderRadius: "1px",
+                        }} />
+                        {/* Human rule */}
+                        <div style={{
+                          position: "absolute", left: (human / scaleMax) * 100 + "%",
+                          top: "2px", bottom: "2px", width: "1px",
+                          background: "oklch(0.65 0.02 260 / 0.45)",
+                        }} />
+                        {/* Bar fill */}
+                        <div style={{
+                          position: "absolute", left: 0, top: "9px",
+                          width: (anim ? barPct : 0) + "%", height: "4px", borderRadius: "2px",
+                          background: "linear-gradient(90deg, " + d.color + "20, " + d.color + ")",
+                          transition: "width 0.7s ease " + (i * 50 + 150) + "ms",
+                        }} />
+                        {/* Dot at end of bar */}
                         <div style={{
                           position: "absolute",
-                          right: "calc(" + (100 - barPct) + "% + 18px)", top: "3px",
-                          fontSize: "11px", fontWeight: 700, color: d.color,
-                          fontFamily: FONTS, whiteSpace: "nowrap",
-                          textAlign: "right",
-                          opacity: anim ? 1 : 0,
-                          transition: "opacity 0.4s ease " + (i * 50 + 300) + "ms",
-                        }}>
-                          {formatMiles(d.miles)} mi <span style={{ color: "#64748b", fontWeight: 500 }}>/ {d.event}</span>
-                        </div>
-                      ) : (
+                          left: "calc(" + (anim ? barPct : 0) + "% - 6px)", top: "5px",
+                          width: "12px", height: "12px", borderRadius: "6px",
+                          background: d.color,
+                          boxShadow: "0 0 0 3px " + d.color + "22",
+                          transition: "left 0.7s ease " + (i * 50 + 150) + "ms",
+                        }} />
+                        {/* Wide-only inline label: right of dot for short bars, left for long bars. */}
+                        {!narrow && (labelOnLeft ? (
+                          <div style={{
+                            position: "absolute",
+                            right: "calc(" + (100 - barPct) + "% + 18px)", top: "3px",
+                            fontSize: "11px", fontWeight: 700, color: d.color,
+                            fontFamily: FONTS, whiteSpace: "nowrap",
+                            textAlign: "right",
+                            opacity: anim ? 1 : 0,
+                            transition: "opacity 0.4s ease " + (i * 50 + 300) + "ms",
+                          }}>
+                            {formatMiles(d.miles)} mi <span style={{ color: "#64748b", fontWeight: 500 }}>/ {d.event}</span>
+                          </div>
+                        ) : (
+                          <div style={{
+                            position: "absolute",
+                            left: "calc(" + barPct + "% + 12px)", top: "3px",
+                            fontSize: "11px", fontWeight: 700, color: d.color,
+                            fontFamily: FONTS, whiteSpace: "nowrap",
+                            opacity: anim ? 1 : 0,
+                            transition: "opacity 0.4s ease " + (i * 50 + 300) + "ms",
+                          }}>
+                            {formatMiles(d.miles)} mi <span style={{ color: "#64748b", fontWeight: 500 }}>/ {d.event}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Narrow-only label below the bar — full row, no overflow risk. */}
+                      {narrow && (
                         <div style={{
-                          position: "absolute",
-                          left: "calc(" + barPct + "% + 12px)", top: "3px",
+                          marginTop: "4px",
                           fontSize: "11px", fontWeight: 700, color: d.color,
-                          fontFamily: FONTS, whiteSpace: "nowrap",
+                          fontFamily: FONTS,
+                          textAlign: "center",
                           opacity: anim ? 1 : 0,
                           transition: "opacity 0.4s ease " + (i * 50 + 300) + "ms",
                         }}>
@@ -635,6 +415,7 @@ function NinesScale() {
           </div>
         );
       })()}
+      </Section>
 
       {/* Legend */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "18px", marginTop: "12px", justifyContent: "center" }}>
