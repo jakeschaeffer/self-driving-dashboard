@@ -526,19 +526,45 @@ function ComparisonPage() {
       </Section>
 
       <Section title="Waymo crash reduction by severity" subtitle="Incidents per million miles. Peer-reviewed data at 56.7M miles and Swiss Re insurance data at 25.3M miles.">
-        <div style={{ height: "320px" }}>
-          <ResponsiveContainer>
-            <BarChart data={WAYMO_CRASH_COMPARISON} layout="vertical" margin={{ left: 140, right: 40, top: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-              <XAxis type="number" tick={{ fill: "#4b5563", fontSize: 10, fontFamily: FONTS }} label={{ value: "Incidents per million miles", position: "bottom", offset: -5, fill: "#374151", fontSize: 10 }} />
-              <YAxis dataKey="category" type="category" tick={{ fill: "#94a3b8", fontSize: 11 }} width={130} />
-              <Tooltip contentStyle={{ background: "#1a1a30", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", fontSize: "11px" }} />
-              <Bar dataKey="human" name="Human drivers" fill="#6b7280" radius={[0, 3, 3, 0]} barSize={14} />
-              <Bar dataKey="waymo" name="Waymo" fill="#3b82f6" radius={[0, 3, 3, 0]} barSize={14} />
-              <Legend wrapperStyle={{ fontSize: "11px", color: "#64748b" }} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {narrow ? (
+          /* Narrow: Recharts y-axis (130px) + left margin (140px) consumes the entire 320px viewport
+             and the bars never get drawn. Show the same data as Waymo-vs-Human pair cards instead. */
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "8px" }}>
+            {WAYMO_CRASH_COMPARISON.map(function(d, i) {
+              return (
+                <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "12px 14px" }}>
+                  <div style={{ fontSize: "10px", color: "#64748b", marginBottom: "8px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{d.category}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                    <div>
+                      <div style={{ fontSize: "16px", fontWeight: 700, color: "#3b82f6", fontFamily: FONTS }}>{d.waymo}</div>
+                      <div style={{ fontSize: "8px", color: "#4b5563", textTransform: "uppercase" }}>Waymo</div>
+                    </div>
+                    <div style={{ fontSize: "10px", color: "#374151" }}>vs</div>
+                    <div>
+                      <div style={{ fontSize: "16px", fontWeight: 700, color: "#6b7280", fontFamily: FONTS }}>{d.human}</div>
+                      <div style={{ fontSize: "8px", color: "#4b5563", textTransform: "uppercase" }}>Human</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#5a6376", marginTop: "4px" }}>incidents per million miles</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ height: "320px" }}>
+            <ResponsiveContainer>
+              <BarChart data={WAYMO_CRASH_COMPARISON} layout="vertical" margin={{ left: 140, right: 40, top: 5, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                <XAxis type="number" tick={{ fill: "#4b5563", fontSize: 10, fontFamily: FONTS }} label={{ value: "Incidents per million miles", position: "bottom", offset: -5, fill: "#374151", fontSize: 10 }} />
+                <YAxis dataKey="category" type="category" tick={{ fill: "#94a3b8", fontSize: 11 }} width={130} />
+                <Tooltip contentStyle={{ background: "#1a1a30", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", fontSize: "11px" }} />
+                <Bar dataKey="human" name="Human drivers" fill="#6b7280" radius={[0, 3, 3, 0]} barSize={14} />
+                <Bar dataKey="waymo" name="Waymo" fill="#3b82f6" radius={[0, 3, 3, 0]} barSize={14} />
+                <Legend wrapperStyle={{ fontSize: "11px", color: "#64748b" }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "12px" }}>
           {WAYMO_CRASH_COMPARISON.map(function(d, i) {
             return (
