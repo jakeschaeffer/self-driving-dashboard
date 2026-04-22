@@ -702,19 +702,44 @@ function TeslaPage() {
       </div>
 
       <Section title="FSD version-over-version improvement" subtitle="Miles between critical disengagements by version. Crowdsourced from teslafsdtracker.com.">
-        <div style={{ height: "280px" }}>
-          <ResponsiveContainer>
-            <BarChart data={TESLA_VERSION_PROGRESS} margin={{ left: 10, right: 30, top: 15, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-              <XAxis dataKey="version" tick={{ fill: "#64748b", fontSize: 11 }} />
-              <YAxis tick={{ fill: "#4b5563", fontSize: 10, fontFamily: FONTS }} label={{ value: "Miles / intervention", angle: -90, position: "insideLeft", fill: "#374151", fontSize: 10 }} />
-              <Tooltip contentStyle={{ background: "#1a1a30", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px" }} formatter={function(v) { return [v.toLocaleString() + " miles", "Miles/intervention"]; }} />
-              <Bar dataKey="milesPerIntervention" radius={[4, 4, 0, 0]} barSize={36}>
-                {TESLA_VERSION_PROGRESS.map(function(_, i) { return <Cell key={i} fill={"hsl(" + (35 + i * 8) + ", 90%, " + (50 + i * 4) + "%)"} />; })}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {/* Custom horizontal bar list (replaced Recharts BarChart, which silently rendered empty
+            <g> elements at every viewport — Cell + barSize + radius interaction). Works at any
+            width down to 320px because each row has its own simple grid. */}
+        {(function() {
+          var max = TESLA_VERSION_PROGRESS.reduce(function(m, d) { return Math.max(m, d.milesPerIntervention); }, 0);
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "16px 20px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px" }}>
+              {TESLA_VERSION_PROGRESS.map(function(d, i) {
+                var pct = (d.milesPerIntervention / max) * 100;
+                var color = "hsl(" + (35 + i * 8) + ", 90%, " + (50 + i * 4) + "%)";
+                return (
+                  <div key={i} style={{
+                    display: "grid",
+                    gridTemplateColumns: "60px 1fr 88px",
+                    gap: "12px",
+                    alignItems: "center",
+                  }}>
+                    <div>
+                      <div style={{ fontSize: "12px", color: "#cbd5e1", fontFamily: FONTS, fontWeight: 600, lineHeight: 1.2 }}>{d.version}</div>
+                      <div style={{ fontSize: "9px", color: "#4b5563", fontFamily: FONTS, marginTop: "2px" }}>{d.date}</div>
+                    </div>
+                    <div style={{ position: "relative", height: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "6px", overflow: "hidden" }}>
+                      <div style={{
+                        position: "absolute", left: 0, top: 0, bottom: 0,
+                        width: pct + "%",
+                        background: color,
+                        borderRadius: "6px",
+                      }} />
+                    </div>
+                    <div style={{ textAlign: "right", fontFamily: FONTS, fontSize: "12px", fontWeight: 700, color: color, whiteSpace: "nowrap" }}>
+                      {d.milesPerIntervention.toLocaleString()} <span style={{ color: "#4b5563", fontWeight: 500, fontSize: "10px" }}>mi</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
         <div style={{ fontSize: "10px", color: "#374151", marginTop: "4px" }}>
           Source: <Src href="https://www.teslafsdtracker.com/">teslafsdtracker.com</Src> (crowdsourced)
         </div>
