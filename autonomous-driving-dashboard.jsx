@@ -359,11 +359,16 @@ function NinesScale() {
                           boxShadow: "0 0 0 3px " + d.color + "22",
                           transition: "left 0.7s ease " + (i * 50 + 150) + "ms",
                         }} />
-                        {/* Wide-only inline label: right of dot for short bars, left for long bars. */}
+                        {/* Wide-only inline label: right of dot for short bars, left for long bars.
+                            Label gets an opaque background matching the section card so the 67%
+                            human rule never paints through the middle of the text. */}
                         {!narrow && (labelOnLeft ? (
                           <div style={{
                             position: "absolute",
-                            right: "calc(" + (100 - barPct) + "% + 18px)", top: "3px",
+                            right: "calc(" + (100 - barPct) + "% + 18px)", top: "1px",
+                            padding: "2px 6px",
+                            background: "#121223",
+                            borderRadius: "3px",
                             fontSize: "11px", fontWeight: 700, color: d.color,
                             fontFamily: FONTS, whiteSpace: "nowrap",
                             textAlign: "right",
@@ -375,7 +380,10 @@ function NinesScale() {
                         ) : (
                           <div style={{
                             position: "absolute",
-                            left: "calc(" + barPct + "% + 12px)", top: "3px",
+                            left: "calc(" + barPct + "% + 12px)", top: "1px",
+                            padding: "2px 6px",
+                            background: "#121223",
+                            borderRadius: "3px",
                             fontSize: "11px", fontWeight: 700, color: d.color,
                             fontFamily: FONTS, whiteSpace: "nowrap",
                             opacity: anim ? 1 : 0,
