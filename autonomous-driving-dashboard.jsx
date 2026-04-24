@@ -227,7 +227,7 @@ function NinesScale() {
 
       <Section
         title="Progress toward autonomous driving"
-        subtitle="Ranked safest-first on a log scale of miles between events. Each decade on the bar is a 10× improvement. Events aren't all the same — disengagements, crashes, injuries, or fatalities — so the event type is shown on every row."
+        subtitle="Ranked safest-first. Each step right on the scale is 10× safer than the one before. Events aren't all the same — disengagements, crashes, injuries, or fatalities — so the event type is shown on every row."
       >
       {/* Ranked ladder — safest first. Bar length encodes log miles; each row shows an explicit
           ×-vs-human delta. Labels flip left of the dot for high-pct rows to avoid overlap with
@@ -454,8 +454,8 @@ function NinesScale() {
         border: "1px solid rgba(96,165,250,0.12)", borderRadius: "8px",
       }}>
         <div style={{ fontSize: "13px", color: "#e2e8f0", lineHeight: 1.7 }}>
-          <strong style={{ color: "#60a5fa" }}>The key insight:</strong> every decade on this chart is a 10× improvement in safety.
-          Tesla FSD v14 at <strong>1,454 miles between disengagements</strong> would have to improve <strong>~360×</strong> — roughly two-and-a-half decades on the scale — to match the average human driver at <strong>529,000 miles between crashes</strong>.
+          <strong style={{ color: "#60a5fa" }}>The key insight:</strong> every step on this chart is a 10× jump in safety.
+          Tesla FSD v14 at <strong>1,454 miles between disengagements</strong> would have to improve <strong>~360×</strong> — more than two full steps up the scale — to match the average human driver at <strong>529,000 miles between crashes</strong>.
           Waymo has crossed the human baseline on crash metrics, but only within carefully mapped operational domains.
           RAND researchers <Src href="https://www.rand.org/pubs/research_reports/RR1478.html">calculated</Src> that proving an AV is 20% safer than humans would require ~8.8 billion test miles.
         </div>
@@ -945,7 +945,7 @@ function TargetsPage() {
 // ============================================================
 
 var PAGES = {
-  home: { title: "How close are self-driving cars to human-level safety?", sub: "Tesla, Waymo, and human drivers plotted by miles between events on a log scale — where each decade is a 10× improvement. (Sometimes called the \"nines\" scale, since each 10× step adds one nine to the reliability rate.)", C: NinesScale },
+  home: { title: "How close are self-driving cars to human-level safety?", sub: "Comparing Tesla, Waymo, and human drivers by miles between safety events. The scale is logarithmic — each step right is 10× safer than the one before it.", C: NinesScale },
   comparison: { title: "AV vs. Human Drivers", sub: "Side-by-side performance data using the most rigorous available metrics.", C: ComparisonPage },
   waymo: { title: "Waymo Deep Dive", sub: "127M driverless miles. Peer-reviewed safety data. The industry's clearest proof.", C: WaymoPage },
   tesla: { title: "Tesla FSD Deep Dive", sub: "Rapid version-over-version improvement, but a large gap remains to unsupervised operation.", C: TeslaPage },
