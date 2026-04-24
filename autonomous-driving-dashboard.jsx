@@ -1,72 +1,29 @@
 import { useState, useEffect } from "react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend, ReferenceLine } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend } from "recharts";
 
-// ============================================================
-// DATA
-// ============================================================
-
-// Harmonized palette — shared chroma, varied hue + lightness so Tesla/Waymo/Human families
-// sit on the same visual weight. Tesla = warm amber→red; Waymo = cool blue; Human = neutral.
-const CAT_COLORS = {
-  tesla: [
-    "oklch(0.62 0.17 40)",   // v12.5 AMCI
-    "oklch(0.68 0.16 50)",   // v12.5 crowd
-    "oklch(0.74 0.15 60)",   // v13
-    "oklch(0.80 0.14 75)",   // v14
-    "oklch(0.72 0.16 55)",   // Robotaxi
-  ],
-  waymo: [
-    "oklch(0.70 0.14 240)",  // testing
-    "oklch(0.64 0.16 245)",  // injury
-    "oklch(0.56 0.17 250)",  // serious injury
-  ],
-  human: [
-    "oklch(0.70 0.02 260)",  // avg
-    "oklch(0.55 0.02 260)",  // fatal
-  ],
-};
-
-// `event` names what one tick on the chart means for each row — we surface it per-dot so
-// disengagements, crashes, and fatalities don't visually conflate.
-const NINES_SCALE_DATA = [
-  { nines: 1.1, miles: 13,        label: "Tesla FSD v12.5", sublabel: "AMCI independent test",       event: "disengagement",  category: "tesla", intensity: 0, source: "https://electrek.co/2024/09/26/tesla-full-self-driving-third-party-testing-13-miles-between-interventions/", sourceLabel: "Electrek / AMCI" },
-  { nines: 2.3, miles: 183,       label: "Tesla FSD v12.5", sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 1, source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
-  { nines: 2.7, miles: 493,       label: "Tesla FSD v13",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 2, source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
-  { nines: 3.2, miles: 1454,      label: "Tesla FSD v14",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 3, source: "https://www.teslafsdtracker.com/", sourceLabel: "teslafsdtracker.com" },
-  { nines: 4.5, miles: 29000,     label: "Waymo (testing)", sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", intensity: 0, source: "https://thelastdriverlicenseholder.com/2025/02/03/2024-disengagement-reports-from-california/", sourceLabel: "CA DMV via LDLH" },
-  { nines: 4.8, miles: 57000,     label: "Tesla Robotaxi",  sublabel: "Austin crash rate",           event: "crash",          category: "tesla", intensity: 4, source: "https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/", sourceLabel: "Fortune" },
-  { nines: 5.7, miles: 529000,    label: "Human Average",   sublabel: "All police-reported crashes", event: "crash",          category: "human", intensity: 0, isBaseline: true, source: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", sourceLabel: "NHTSA" },
-  { nines: 6.1, miles: 1350000,   label: "Waymo",           sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", intensity: 1, source: "https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786", sourceLabel: "Kusano et al. 2025" },
-  { nines: 7.7, miles: 50000000,  label: "Waymo",           sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", intensity: 2, source: "https://waymo.com/safety/impact", sourceLabel: "Waymo Safety" },
-  { nines: 7.9, miles: 86000000,  label: "Human Fatal",     sublabel: "Fatal crash rate only",       event: "fatal crash",    category: "human", intensity: 1, isBaseline: true, source: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", sourceLabel: "NHTSA" },
-];
-
-NINES_SCALE_DATA.forEach(function(d) { d.color = CAT_COLORS[d.category][d.intensity]; });
-
-const TARGET_THRESHOLDS = [
-  { nines: 5.7, label: "Match human average", description: "System matches avg human crash rate", color: "#fbbf24" },
-  { nines: 6.5, label: "Regulatory confidence", description: "~5x better than humans — likely threshold for unsupervised permits", color: "#22c55e" },
-  { nines: 7.0, label: "Remove steering wheel", description: "~20x better than humans — plausible threshold for steeringless mass-market", color: "#3b82f6" },
-  { nines: 7.5, label: "Child safety threshold", description: "~50x better than humans — trust a child alone in the vehicle", color: "#a855f7" },
-];
-
-const TESLA_VERSION_PROGRESS = [
-  { version: "v11", date: "2023 Q1", milesPerIntervention: 5, nines: 0.7 },
-  { version: "v12.3", date: "2024 Q2", milesPerIntervention: 80, nines: 1.9 },
-  { version: "v12.5", date: "2024 Q3", milesPerIntervention: 183, nines: 2.3 },
-  { version: "v13", date: "2025 Q1", milesPerIntervention: 493, nines: 2.7 },
-  { version: "v13.2", date: "2025 Q2", milesPerIntervention: 700, nines: 2.8 },
-  { version: "v14", date: "2025 Q4", milesPerIntervention: 1454, nines: 3.2 },
-];
-
-const WAYMO_CRASH_COMPARISON = [
-  { category: "Serious injury+", waymo: 0.02, human: 0.23, reduction: 90 },
-  { category: "All injury", waymo: 0.74, human: 3.97, reduction: 81 },
-  { category: "Airbag deploy", waymo: 0.26, human: 1.44, reduction: 82 },
-  { category: "Pedestrian injury", waymo: 0.05, human: 0.59, reduction: 92 },
-  { category: "Cyclist injury", waymo: 0.03, human: 0.18, reduction: 83 },
-  { category: "Property dmg (Swiss Re)", waymo: 0.36, human: 3.08, reduction: 88 },
-];
+import {
+  SITE,
+  PAGES as PAGES_CONFIG,
+  NINES_SCALE_DATA,
+  HOME_STATS,
+  WAYMO_STATS,
+  TESLA_STATS,
+  CRASH_RATES,
+  WAYMO_CRASH_REDUCTION,
+  WAYMO_MILES_TIMELINE,
+  WAYMO_INCIDENTS,
+  TESLA_VERSION_PROGRESS,
+  TESLA_FSD_SUPERVISED,
+  TESLA_ROBOTAXI,
+  TESLA_ROBOTAXI_SOURCE,
+  TESLA_PROJECTION,
+  MUSK_PREDICTIONS,
+  TARGET_THRESHOLDS,
+  REGULATORY_BARRIERS,
+  EXPERT_TIMELINES,
+  CHILD_SAFETY,
+  FOOTER_SOURCES,
+} from "./data.js";
 
 // ============================================================
 // UTILITIES
@@ -175,14 +132,6 @@ function Section({ title, subtitle, children }) {
   );
 }
 
-const NAV_ITEMS = [
-  { id: "home", label: "Progress overview" },
-  { id: "comparison", label: "AV vs Humans" },
-  { id: "waymo", label: "Waymo" },
-  { id: "tesla", label: "Tesla FSD" },
-  { id: "targets", label: "Road to Steeringless" },
-];
-
 function Nav({ active, onChange }) {
   return (
     <nav style={{
@@ -190,15 +139,15 @@ function Nav({ active, onChange }) {
       borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 20px",
       overflowX: "auto", WebkitOverflowScrolling: "touch",
     }}>
-      {NAV_ITEMS.map(function(item) {
+      {PAGES_CONFIG.map(function(p) {
         return (
-          <button key={item.id} onClick={function() { onChange(item.id); }} style={{
-            padding: "13px 16px", background: active === item.id ? "rgba(255,255,255,0.05)" : "transparent",
-            border: "none", borderBottom: active === item.id ? "2px solid #60a5fa" : "2px solid transparent",
-            color: active === item.id ? "#e2e8f0" : "#64748b", cursor: "pointer",
+          <button key={p.id} onClick={function() { onChange(p.id); }} style={{
+            padding: "13px 16px", background: active === p.id ? "rgba(255,255,255,0.05)" : "transparent",
+            border: "none", borderBottom: active === p.id ? "2px solid #60a5fa" : "2px solid transparent",
+            color: active === p.id ? "#e2e8f0" : "#64748b", cursor: "pointer",
             fontFamily: FONTS, fontSize: "11px", letterSpacing: "0.06em",
             textTransform: "uppercase", whiteSpace: "nowrap", transition: "all 0.15s",
-          }}>{item.label}</button>
+          }}>{p.nav}</button>
         );
       })}
     </nav>
@@ -219,10 +168,9 @@ function NinesScale() {
   return (
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "28px" }}>
-        <StatCard label="Waymo best" value="50M mi" sublabel="per serious injury crash" accent="#3b82f6" sourceHref="https://waymo.com/safety/impact" sourceText="Waymo Safety" />
-        <StatCard label="Tesla FSD v14" value="1,454 mi" sublabel="per critical disengagement" accent="#f59e0b" sourceHref="https://www.teslafsdtracker.com/" sourceText="teslafsdtracker" />
-        <StatCard label="Human baseline" value="529K mi" sublabel="per police-reported crash" accent="#a3a3a3" sourceHref="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762" sourceText="NHTSA" />
-        <StatCard label="Gap: Tesla to unsupervised" value="~460×" sublabel="vs. Elluswamy 670K mi target" accent="#ef4444" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
+        {HOME_STATS.map(function(s, i) {
+          return <StatCard key={i} label={s.label} value={s.value} sublabel={s.sublabel} accent={s.accent} sourceHref={s.source.url} sourceText={s.source.label} />;
+        })}
       </div>
 
       <Section
@@ -312,7 +260,7 @@ function NinesScale() {
                     <div>
                       <div style={{ fontSize: "12px", fontWeight: 600, color: d.color, lineHeight: 1.2 }}>{d.label}</div>
                       <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px", lineHeight: 1.35 }}>
-                        {d.sublabel} <span style={{ color: "#374151" }}>(<Src href={d.source}>{d.sourceLabel}</Src>)</span>
+                        {d.sublabel} <span style={{ color: "#374151" }}>(<Src href={d.source.url}>{d.source.label}</Src>)</span>
                       </div>
                     </div>
 
@@ -470,13 +418,6 @@ function NinesScale() {
 
 function ComparisonPage() {
   var narrow = useNarrow();
-  var compData = [
-    { metric: "Police-reported crash", human: "529K", waymo: "~476K", tesla: "~57K", waymoGood: false, teslaGood: false, src: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", srcLabel: "NHTSA" },
-    { metric: "Injury crash",           human: "252K", waymo: "1.35M", tesla: "\u2014", waymoGood: true, teslaGood: null,  src: "https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786", srcLabel: "Kusano et al." },
-    { metric: "Serious injury crash",   human: "~5M",  waymo: "50M",   tesla: "\u2014", waymoGood: true, teslaGood: null,  src: "https://waymo.com/safety/impact", srcLabel: "Waymo Safety" },
-    { metric: "Fatal crash",            human: "86M",  waymo: "0 fatalities*", tesla: "\u2014", waymoGood: true, teslaGood: null,  src: "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762", srcLabel: "NHTSA" },
-  ];
-
   return (
     <div>
       <Section title="Crash rates: AV systems vs. human drivers" subtitle="Every number is miles between events — higher is safer. Green = outperforming the human average; amber = worse than humans; em dash = no comparable data.">
@@ -503,7 +444,7 @@ function ComparisonPage() {
               </tr>
             </thead>
             <tbody>
-              {compData.map(function(r, i) {
+              {CRASH_RATES.map(function(r, i) {
                 var renderCell = function(value, color) {
                   // "—" stays plain; "0 fatalities*" has footnote already; everything else gets a small "mi" unit.
                   var hasMiUnit = value !== "\u2014" && !/[a-z]/.test(value);
@@ -519,7 +460,7 @@ function ComparisonPage() {
                     {renderCell(r.human, "#a3a3a3")}
                     {renderCell(r.waymo, r.waymoGood === true ? "#22c55e" : r.waymoGood === false ? "#fbbf24" : "#4b5563")}
                     {renderCell(r.tesla, r.teslaGood === true ? "#22c55e" : r.teslaGood === false ? "#ef4444" : "#4b5563")}
-                    <td style={{ padding: "12px 14px" }}><Src href={r.src}>{r.srcLabel}</Src></td>
+                    <td style={{ padding: "12px 14px" }}><Src href={r.source.url}>{r.source.label}</Src></td>
                   </tr>
                 );
               })}
@@ -538,7 +479,7 @@ function ComparisonPage() {
           /* Narrow: Recharts y-axis (130px) + left margin (140px) consumes the entire 320px viewport
              and the bars never get drawn. Show the same data as Waymo-vs-Human pair cards instead. */
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "8px" }}>
-            {WAYMO_CRASH_COMPARISON.map(function(d, i) {
+            {WAYMO_CRASH_REDUCTION.map(function(d, i) {
               return (
                 <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "12px 14px" }}>
                   <div style={{ fontSize: "10px", color: "#64748b", marginBottom: "8px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{d.category}</div>
@@ -561,7 +502,7 @@ function ComparisonPage() {
         ) : (
           <div style={{ height: "320px" }}>
             <ResponsiveContainer>
-              <BarChart data={WAYMO_CRASH_COMPARISON} layout="vertical" margin={{ left: 140, right: 40, top: 5, bottom: 5 }}>
+              <BarChart data={WAYMO_CRASH_REDUCTION} layout="vertical" margin={{ left: 140, right: 40, top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                 <XAxis type="number" tick={{ fill: "#4b5563", fontSize: 10, fontFamily: FONTS }} label={{ value: "Incidents per million miles", position: "bottom", offset: -5, fill: "#374151", fontSize: 10 }} />
                 <YAxis dataKey="category" type="category" tick={{ fill: "#94a3b8", fontSize: 11 }} width={130} />
@@ -574,7 +515,7 @@ function ComparisonPage() {
           </div>
         )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "12px" }}>
-          {WAYMO_CRASH_COMPARISON.map(function(d, i) {
+          {WAYMO_CRASH_REDUCTION.map(function(d, i) {
             return (
               <div key={i} style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "16px", padding: "4px 12px", fontSize: "11px" }}>
                 <span style={{ color: "#22c55e", fontWeight: 700, fontFamily: FONTS }}>{"↓"}{d.reduction}%</span>
@@ -602,31 +543,24 @@ function ComparisonPage() {
 // ============================================================
 
 function WaymoPage() {
-  var milesData = [
-    { period: "2020", miles: 6 }, { period: "2021", miles: 10 },
-    { period: "2022", miles: 20 }, { period: "2023", miles: 35 },
-    { period: "2024", miles: 60 }, { period: "Sep 2025", miles: 127 },
-  ];
-
   return (
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "28px" }}>
-        <StatCard label="Driverless miles" value="127M+" sublabel="Through Sep 2025" accent="#3b82f6" sourceHref="https://waymo.com/safety/impact" sourceText="Waymo Safety" />
-        <StatCard label="Weekly rides" value="450K+" sublabel="Across 10 cities" accent="#60a5fa" sourceHref="https://www.cnbc.com/2025/12/08/waymo-paid-rides-robotaxi-tesla.html" sourceText="CNBC" />
-        <StatCard label="Safety vs humans" value={"↓90%"} sublabel="Fewer serious injuries" accent="#22c55e" sourceHref="https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786" sourceText="Kusano et al." />
-        <StatCard label="Cities" value="10" sublabel="Feb 2026" accent="#8b5cf6" sourceHref="https://www.axios.com/2026/02/24/waymo-robotaxis-now-available-in-10-cities" sourceText="Axios" />
+        {WAYMO_STATS.map(function(s, i) {
+          return <StatCard key={i} label={s.label} value={s.value} sublabel={s.sublabel} accent={s.accent} sourceHref={s.source.url} sourceText={s.source.label} />;
+        })}
       </div>
 
       <Section title="Cumulative driverless miles" subtitle="Rider-only miles (no safety driver). Waymo now drives ~2M autonomous miles per week.">
         <div style={{ height: "260px" }}>
           <ResponsiveContainer>
-            <BarChart data={milesData} margin={{ left: 10, right: 10, top: 15, bottom: 5 }}>
+            <BarChart data={WAYMO_MILES_TIMELINE} margin={{ left: 10, right: 10, top: 15, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
               <XAxis dataKey="period" tick={{ fill: "#64748b", fontSize: 11 }} />
               <YAxis tick={{ fill: "#4b5563", fontSize: 10, fontFamily: FONTS }} label={{ value: "Million miles", angle: -90, position: "insideLeft", fill: "#374151", fontSize: 10 }} />
               <Tooltip contentStyle={{ background: "#1a1a30", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px" }} formatter={function(v) { return [v + "M miles", "Driverless"]; }} />
               <Bar dataKey="miles" radius={[4, 4, 0, 0]} barSize={36}>
-                {milesData.map(function(_, i) { return <Cell key={i} fill={i === milesData.length - 1 ? "#2563eb" : "#3b82f660"} />; })}
+                {WAYMO_MILES_TIMELINE.map(function(_, i) { return <Cell key={i} fill={i === WAYMO_MILES_TIMELINE.length - 1 ? "#2563eb" : "#3b82f660"} />; })}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -638,7 +572,7 @@ function WaymoPage() {
 
       <Section title="Crash rates by severity vs. human benchmark" subtitle="Per million miles. Source: Kusano et al. 2025 — 56.7M rider-only miles.">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: "10px" }}>
-          {WAYMO_CRASH_COMPARISON.map(function(d, i) {
+          {WAYMO_CRASH_REDUCTION.map(function(d, i) {
             return (
               <div key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "14px 16px" }}>
                 <div style={{ fontSize: "10px", color: "#64748b", marginBottom: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{d.category}</div>
@@ -666,13 +600,7 @@ function WaymoPage() {
 
       <Section title="Known limitations & incidents" subtitle="Even the industry leader encounters edge cases.">
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          {[
-            { date: "Oct 2025", text: "NHTSA investigation: 19\u201320 school bus passing incidents in Austin", severity: "high", src: "https://www.npr.org/2025/12/06/nx-s1-5635614/waymo-school-buses-recall", srcLabel: "NPR" },
-            { date: "Dec 2025", text: "Voluntary recall of 3,067 vehicles for school bus detection fix", severity: "medium", src: "https://www.npr.org/2025/12/06/nx-s1-5635614/waymo-school-buses-recall", srcLabel: "NPR" },
-            { date: "Dec 2025", text: "SF power outage caused some vehicles to freeze in intersections", severity: "medium", src: "https://tech.slashdot.org/story/25/12/27/0645206/waymo-updates-vehicles-to-better-handle-power-outages---but-still-faces-criticism", srcLabel: "Slashdot" },
-            { date: "Ongoing", text: "Operates only in pre-mapped geofenced areas; no snow capability", severity: "info", src: null, srcLabel: null },
-            { date: "Ongoing", text: "Remote operators assist with edge cases \u2014 not fully independent", severity: "info", src: null, srcLabel: null },
-          ].map(function(item, i) {
+          {WAYMO_INCIDENTS.map(function(item, i) {
             return (
               <div key={i} style={{
                 display: "flex", gap: "12px", padding: "10px 14px",
@@ -683,7 +611,7 @@ function WaymoPage() {
                 <div style={{ fontSize: "10px", color: "#4b5563", minWidth: "65px", fontFamily: FONTS }}>{item.date}</div>
                 <div style={{ flex: 1, fontSize: "12px", color: "#b0b8c4" }}>
                   {item.text}
-                  {item.src && <span style={{ marginLeft: "6px" }}><Src href={item.src}>{item.srcLabel}</Src></span>}
+                  {item.source && <span style={{ marginLeft: "6px" }}><Src href={item.source.url}>{item.source.label}</Src></span>}
                 </div>
               </div>
             );
@@ -703,10 +631,9 @@ function TeslaPage() {
   return (
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "28px" }}>
-        <StatCard label="FSD v14 best" value="1,454" sublabel="Miles / critical disengagement" accent="#fbbf24" sourceHref="https://www.teslafsdtracker.com/" sourceText="teslafsdtracker" />
-        <StatCard label="Improvement" value={"8\u00D7"} sublabel="v12.5 to v14 in 14 months" accent="#f59e0b" sourceHref="https://www.teslafsdtracker.com/" sourceText="teslafsdtracker" />
-        <StatCard label="Robotaxi crash rate" value="1/57K" sublabel="Miles per crash (Austin)" accent="#ef4444" sourceHref="https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/" sourceText="Fortune" />
-        <StatCard label="Gap to unsupervised" value={"~460\u00D7"} sublabel="vs. Elluswamy 670K target" accent="#dc2626" sourceHref="https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/" sourceText="Electrek" />
+        {TESLA_STATS.map(function(s, i) {
+          return <StatCard key={i} label={s.label} value={s.value} sublabel={s.sublabel} accent={s.accent} sourceHref={s.source.url} sourceText={s.source.label} />;
+        })}
       </div>
 
       <Section title="FSD version-over-version improvement" subtitle="Miles between critical disengagements by version. Crowdsourced from teslafsdtracker.com.">
@@ -758,9 +685,9 @@ function TeslaPage() {
         </Note>
         <div style={{ marginTop: "16px", padding: "16px 20px", background: "rgba(251,191,35,0.05)", border: "1px solid rgba(251,191,35,0.12)", borderRadius: "8px" }}>
           <div style={{ fontSize: "12px", color: "#e2e8f0", lineHeight: 1.7 }}>
-            <strong style={{ color: "#fbbf24" }}>If Tesla maintains ~2.7× improvement per version:</strong>
-            <br />v15 → ~3,900 mi · v16 → ~10,500 mi · v17 → ~28,400 mi · v18 → ~76,700 mi · v19 → ~207,000 mi · v20 → ~560,000 mi
-            <br /><span style={{ color: "#64748b" }}>~6 more versions (~3 years) to reach the unsupervised threshold — if the rate holds. Historically, improvement rates slow at higher reliability.</span>
+            <strong style={{ color: "#fbbf24" }}>If Tesla maintains {TESLA_PROJECTION.multiplier} improvement per version:</strong>
+            <br />{TESLA_PROJECTION.projections}
+            <br /><span style={{ color: "#64748b" }}>{TESLA_PROJECTION.caveat}</span>
           </div>
         </div>
       </Section>
@@ -769,38 +696,26 @@ function TeslaPage() {
         <div style={{ display: "grid", gridTemplateColumns: narrow ? "1fr" : "1fr 1fr", gap: "14px" }}>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "18px" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: "#fbbf24", marginBottom: "12px" }}>FSD Supervised (consumer)</div>
-            {[
-              ["Best crowdsourced rate", "1,454 mi/int", "https://www.teslafsdtracker.com/", "tracker"],
-              ["Independent test (AMCI)", "13 mi/int", "https://electrek.co/2024/09/26/tesla-full-self-driving-third-party-testing-13-miles-between-interventions/", "Electrek"],
-              ["Coast-to-coast record", "2,732 mi, 0 int", "https://www.teslarati.com/tesla-fsd-successfully-completes-full-coast-to-coast-drive-with-zero-interventions/", "Teslarati"],
-              ["Longest streak", "12,961 mi", "https://www.notateslaapp.com/news/3514/tesla-owner-reaches-almost-13000-miles-of-intervention-free-fsd-driving", "NotATeslaApp"],
-              ["NHTSA investigation", "2.88M vehicles", "https://opentools.ai/news/nhtsa-investigates-teslas-fsd-mode-for-traffic-safety-violations-what-it-means-for-the-future-of-autonomous-driving", "OpenTools"],
-              ["Requires", "Human driver", null, null],
-            ].map(function(row, i) {
+            {TESLA_FSD_SUPERVISED.map(function(row, i) {
               return (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.025)", fontSize: "11px" }}>
-                  <span style={{ color: "#64748b" }}>{row[0]} {row[2] && <Src href={row[2]}>{row[3]}</Src>}</span>
-                  <span style={{ color: "#cbd5e1", fontFamily: FONTS }}>{row[1]}</span>
+                  <span style={{ color: "#64748b" }}>{row.label} {row.source && <Src href={row.source.url}>{row.source.label}</Src>}</span>
+                  <span style={{ color: "#cbd5e1", fontFamily: FONTS }}>{row.value}</span>
                 </div>
               );
             })}
           </div>
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(239,68,68,0.12)", borderRadius: "8px", padding: "18px" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: "#ef4444", marginBottom: "12px" }}>Robotaxi (Austin, unsupervised)</div>
-            {[
-              ["Launched", "June 2025"], ["Unsupervised since", "Jan 2026"],
-              ["Fleet size", "~31 vehicles"], ["Miles driven", "~800,000"],
-              ["Crashes", "14"], ["Crash rate", "1 per ~57K mi"],
-              ["vs. human avg", "~9x worse"], ["vs. Tesla w/o AP", "~4x worse"],
-            ].map(function(row, i) {
+            {TESLA_ROBOTAXI.map(function(row, i) {
               return (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.025)", fontSize: "11px" }}>
-                  <span style={{ color: "#64748b" }}>{row[0]}</span>
-                  <span style={{ color: "#fca5a5", fontFamily: FONTS }}>{row[1]}</span>
+                  <span style={{ color: "#64748b" }}>{row.label}</span>
+                  <span style={{ color: "#fca5a5", fontFamily: FONTS }}>{row.value}</span>
                 </div>
               );
             })}
-            <div style={{ marginTop: "8px" }}><Src href="https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/">Fortune analysis of Tesla NHTSA disclosure</Src></div>
+            <div style={{ marginTop: "8px" }}><Src href={TESLA_ROBOTAXI_SOURCE.url}>{TESLA_ROBOTAXI_SOURCE.label} analysis of Tesla NHTSA disclosure</Src></div>
           </div>
         </div>
         <Note>
@@ -813,21 +728,14 @@ function TeslaPage() {
 
       <Section title="Musk self-driving timeline predictions" subtitle="A track record of claims vs. reality.">
         <div>
-          {[
-            { year: "2015", claim: "Full autonomy by 2018", result: "Not achieved", src: "https://electrek.co/2025/01/13/elon-musk-misrepresents-data-that-shows-tesla-is-still-years-away-from-unsupervised-self-driving/", srcLabel: "Electrek" },
-            { year: "2016", claim: "LA to NY autonomous by end of 2017", result: "Achieved Dec 2025 \u2014 8 years late", src: "https://www.teslarati.com/tesla-fsd-successfully-completes-full-coast-to-coast-drive-with-zero-interventions/", srcLabel: "Teslarati" },
-            { year: "2019", claim: "1 million robotaxis by 2020", result: "31 in Austin as of Feb 2026", src: "https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/", srcLabel: "Fortune" },
-            { year: "2022", claim: "Robotaxi production in 2024", result: "Delayed to 2025-2026", src: "https://techcrunch.com/2025/01/30/elon-musk-reveals-elon-musk-was-wrong-about-full-self-driving/", srcLabel: "TechCrunch" },
-            { year: "2025", claim: "Millions of robotaxis in H2 2025", result: "~31 operating", src: "https://electrek.co/2025/04/22/here-are-all-crazy-claims-elon-musk-made-tesla-self-driving-today/", srcLabel: "Electrek" },
-            { year: "2025", claim: "HW3 cars can do unsupervised FSD", result: "Admitted upgrade needed", src: "https://techcrunch.com/2025/01/30/elon-musk-reveals-elon-musk-was-wrong-about-full-self-driving/", srcLabel: "TechCrunch" },
-          ].map(function(item, i) {
+          {MUSK_PREDICTIONS.map(function(item, i) {
             return (
               <div key={i} style={{ display: "flex", gap: "14px", padding: "10px 0 10px 14px", borderLeft: "2px solid rgba(239,68,68,0.25)" }}>
                 <div style={{ fontSize: "11px", color: "#f59e0b", fontFamily: FONTS, minWidth: "42px", fontWeight: 600 }}>{item.year}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "12px", color: "#cbd5e1" }}>{item.claim}</div>
                   <div style={{ fontSize: "11px", color: "#ef4444", marginTop: "2px" }}>
-                    {"\u274C"} {item.result} <Src href={item.src}>{item.srcLabel}</Src>
+                    {"\u274C"} {item.result} <Src href={item.source.url}>{item.source.label}</Src>
                   </div>
                 </div>
               </div>
@@ -871,14 +779,7 @@ function TargetsPage() {
 
       <Section title="Regulatory barriers" subtitle="The gap is not just technical \u2014 it is legal.">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "10px" }}>
-          {[
-            { title: "Federal exemption cap", detail: "Max 2,500 non-compliant vehicles/year. No new legislation in a decade.", status: "blocked", src: "https://www.foley.com/insights/publications/2025/11/driving-into-2026-the-state-of-nhtsa-and-the-future-of-vehicle-safety-regulation/", srcLabel: "Foley & Lardner" },
-            { title: "FMVSS updates", detail: "Crashworthiness updated (2022). Transmission, windshield, lighting still in progress.", status: "partial", src: "https://www.federalregister.gov/documents/2022/03/30/2022-05426/occupant-protection-for-vehicles-with-automated-driving-systems", srcLabel: "Federal Register" },
-            { title: "AV STEP program", detail: "Voluntary safety-case framework proposed Jan 2025. No numeric thresholds. Not finalized.", status: "partial", src: "https://www.cov.com/-/media/files/corporate/publications/2025/02/what-nhtsas-autonomous-vehicle-proposal-means-for-cos.pdf", srcLabel: "Covington" },
-            { title: "SELF DRIVE Act", detail: "Would raise/eliminate 2,500 cap. Failed for ~10 years. New draft late 2025.", status: "blocked", src: "https://www.theavindustry.org/press-release/avia-statement-on-the-introduction-of-self-drive-act", srcLabel: "AVIA" },
-            { title: "Zoox exemption", detail: "First NHTSA exemption for steeringless American AV (Aug 2025). Only 64 demo vehicles.", status: "achieved", src: "https://www.nhtsa.gov/press-releases/nhtsa-issues-first-ever-demonstration-exemption-american-built-automated-vehicles", srcLabel: "NHTSA" },
-            { title: "NHTSA staffing", detail: "Agency cut ~25% (780 to 575 employees). Reduced rulemaking capacity.", status: "blocked", src: "https://www.foley.com/insights/publications/2025/11/driving-into-2026-the-state-of-nhtsa-and-the-future-of-vehicle-safety-regulation/", srcLabel: "Foley & Lardner" },
-          ].map(function(item, i) {
+          {REGULATORY_BARRIERS.map(function(item, i) {
             var statusColors = { achieved: { bg: "rgba(34,197,94,0.12)", fg: "#22c55e" }, partial: { bg: "rgba(251,191,35,0.12)", fg: "#fbbf24" }, blocked: { bg: "rgba(239,68,68,0.12)", fg: "#ef4444" } };
             var sc = statusColors[item.status];
             return (
@@ -888,7 +789,7 @@ function TargetsPage() {
                   <div style={{ fontSize: "8px", padding: "2px 7px", borderRadius: "10px", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", background: sc.bg, color: sc.fg }}>{item.status}</div>
                 </div>
                 <div style={{ fontSize: "11px", color: "#64748b", lineHeight: 1.5, marginBottom: "6px" }}>{item.detail}</div>
-                <Src href={item.src}>{item.srcLabel}</Src>
+                <Src href={item.source.url}>{item.source.label}</Src>
               </div>
             );
           })}
@@ -897,22 +798,14 @@ function TargetsPage() {
 
       <Section title="Expert consensus on timelines" subtitle="McKinsey (91 experts, Jan 2026), S&P Global, WEF, and BCG.">
         <div>
-          {[
-            { year: "Now", event: "L4 robotaxis in select cities (Waymo)", status: "\u2705 Happening", color: "#22c55e", src: "https://www.axios.com/2026/02/24/waymo-robotaxis-now-available-in-10-cities", srcLabel: "Axios" },
-            { year: "~2028", event: "L4 robotaxis in 20+ cities globally", status: "On track", color: "#60a5fa", src: "https://www.mckinsey.com/features/mckinsey-center-for-future-mobility/our-insights/future-of-autonomous-vehicles-industry", srcLabel: "McKinsey" },
-            { year: "~2030", event: "Large-scale L4 robotaxi rollout", status: "Consensus", color: "#60a5fa", src: "https://www.mckinsey.com/features/mckinsey-center-for-future-mobility/our-insights/future-of-autonomous-vehicles-industry", srcLabel: "McKinsey" },
-            { year: "~2032", event: "L4 in privately owned vehicles (limited)", status: "Optimistic", color: "#fbbf24", src: "https://www.mckinsey.com/features/mckinsey-center-for-future-mobility/our-insights/future-of-autonomous-vehicles-industry", srcLabel: "McKinsey" },
-            { year: "~2035", event: "<6% of new vehicles sold have L4", status: "Forecast", color: "#fbbf24", src: "https://www.mckinsey.com/features/mckinsey-center-for-future-mobility/our-insights/future-of-autonomous-vehicles-industry", srcLabel: "McKinsey" },
-            { year: "2035+", event: "Consumer steeringless vehicles (mass market)", status: "'Unlikely by 2035'", color: "#ef4444", src: "https://www.spglobal.com/mobility/en/research-analysis/fuel-for-thought-waiting-for-autonomy.html", srcLabel: "S&P Global" },
-            { year: "2040s\u201360s", event: "Most safety/mobility benefits materialize", status: "Long-range", color: "#ef4444", src: "https://www.weforum.org/stories/2025/05/autonomous-vehicles-technology-future/", srcLabel: "WEF" },
-          ].map(function(item, i) {
+          {EXPERT_TIMELINES.map(function(item, i) {
             return (
               <div key={i} style={{ display: "flex", gap: "14px", padding: "10px 0 10px 14px", borderLeft: "2px solid " + item.color + "30" }}>
                 <div style={{ minWidth: "70px", fontSize: "12px", fontWeight: 700, color: item.color, fontFamily: FONTS }}>{item.year}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "12px", color: "#e2e8f0" }}>{item.event}</div>
                   <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
-                    {item.status}{" \u00B7 "}<Src href={item.src}>{item.srcLabel}</Src>
+                    {item.status}{" \u00B7 "}<Src href={item.source.url}>{item.source.label}</Src>
                   </div>
                 </div>
               </div>
@@ -924,15 +817,15 @@ function TargetsPage() {
       <Section title="The child safety question" subtitle="When would you trust your child alone in a driverless car?">
         <div style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.06), rgba(96,165,250,0.04))", border: "1px solid rgba(168,85,247,0.12)", borderRadius: "8px", padding: "20px 22px" }}>
           <div style={{ fontSize: "12px", color: "#e2e8f0", lineHeight: 1.8 }}>
-            Research from <Src href="https://injury.research.chop.edu/blog/posts/self-driving-vehicles-and-child-passenger-safety">Children's Hospital of Philadelphia</Src> found
-            that while <strong style={{ color: "#a855f7" }}>63% of parents</strong> are comfortable driving with autonomous features,
-            only <strong style={{ color: "#a855f7" }}>21% would allow their child to ride alone</strong>.
+            Research from <Src href={CHILD_SAFETY.source.url}>{CHILD_SAFETY.source.label}</Src> found
+            that while <strong style={{ color: "#a855f7" }}>{CHILD_SAFETY.parentsComfortableDriving} of parents</strong> are comfortable driving with autonomous features,
+            only <strong style={{ color: "#a855f7" }}>{CHILD_SAFETY.parentsLetChildRideAlone} would allow their child to ride alone</strong>.
             <br /><br />
-            The implied threshold requires crash-rate superiority (<strong>roughly 1 crash per 10M+ miles</strong>) plus an entire safety infrastructure
+            The implied threshold requires crash-rate superiority (<strong>{CHILD_SAFETY.impliedCrashThreshold}</strong>) plus an entire safety infrastructure
             that does not yet exist: remote monitoring, secure interiors, emergency communication, child-specific protocols,
             verified pickup/dropoff, behavioral monitoring, and medical emergency response.
             <br /><br />
-            Waymo's serious-injury rate — about one event per 50 million miles — approaches the crash threshold, but the non-crash safety systems for unaccompanied minors remain largely unbuilt.
+            Waymo's serious-injury rate — {CHILD_SAFETY.waymoSeriousInjuryRate} — approaches the crash threshold, but the non-crash safety systems for unaccompanied minors remain largely unbuilt.
           </div>
         </div>
       </Section>
@@ -944,19 +837,21 @@ function TargetsPage() {
 // MAIN APP
 // ============================================================
 
-var PAGES = {
-  home: { title: "How close are self-driving cars to human-level safety?", sub: "Comparing Tesla, Waymo, and human drivers by miles between safety events. The scale is logarithmic — each step right is 10× safer than the one before it.", C: NinesScale },
-  comparison: { title: "AV vs. Human Drivers", sub: "Side-by-side performance data using the most rigorous available metrics.", C: ComparisonPage },
-  waymo: { title: "Waymo Deep Dive", sub: "127M driverless miles. Peer-reviewed safety data. The industry's clearest proof.", C: WaymoPage },
-  tesla: { title: "Tesla FSD Deep Dive", sub: "Rapid version-over-version improvement, but a large gap remains to unsupervised operation.", C: TeslaPage },
-  targets: { title: "Road to Steeringless", sub: "What reliability and regulatory milestones must be cleared to remove the steering wheel?", C: TargetsPage },
+// Page-id → component mapping. Titles + subs come from PAGES_CONFIG (data.js).
+var PAGE_COMPONENTS = {
+  home: NinesScale,
+  comparison: ComparisonPage,
+  waymo: WaymoPage,
+  tesla: TeslaPage,
+  targets: TargetsPage,
 };
 
 export default function App() {
   var _s = useState("home");
   var page = _s[0];
   var setPage = _s[1];
-  var pg = PAGES[page];
+  var pg = PAGES_CONFIG.find(function(p) { return p.id === page; }) || PAGES_CONFIG[0];
+  var PageComponent = PAGE_COMPONENTS[page];
 
   return (
     <div style={{ minHeight: "100vh", background: "#0d0d1f", color: "#e2e8f0", fontFamily: BODY }}>
@@ -970,7 +865,7 @@ export default function App() {
           <span style={{ fontSize: "10px", color: "#374151", fontFamily: FONTS }}>Autonomous Driving by the Numbers</span>
         </div>
         <div style={{ fontSize: "9px", color: "#27273f", marginTop: "3px", fontFamily: FONTS }}>
-          Last updated: Feb 2026
+          {"Last updated: "}{SITE.lastUpdated}
         </div>
       </header>
 
@@ -979,15 +874,14 @@ export default function App() {
       <main style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px 60px" }}>
         <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#f1f5f9", margin: "0 0 6px", fontFamily: BODY, letterSpacing: "-0.01em" }}>{pg.title}</h1>
         <p style={{ fontSize: "13px", color: "#4b5563", margin: "0 0 24px", lineHeight: 1.5, maxWidth: "680px" }}>{pg.sub}</p>
-        <pg.C />
+        <PageComponent />
       </main>
 
       <footer style={{
         padding: "20px", borderTop: "1px solid rgba(255,255,255,0.03)",
         textAlign: "center", fontSize: "10px", color: "#27273f", fontFamily: FONTS, lineHeight: 1.6,
       }}>
-        Data: NHTSA {"\u00B7"} CA DMV {"\u00B7"} Waymo Safety Impact {"\u00B7"} Swiss Re {"\u00B7"} Kusano et al. 2025 {"\u00B7"}
-        teslafsdtracker.com {"\u00B7"} AMCI Testing {"\u00B7"} Fortune {"\u00B7"} Electrek {"\u00B7"} McKinsey {"\u00B7"} RAND {"\u00B7"} CHOP
+        {"Data: " + FOOTER_SOURCES.join(" \u00B7 ")}
         <br />Not investment advice. Metrics use different methodologies.
       </footer>
     </div>
