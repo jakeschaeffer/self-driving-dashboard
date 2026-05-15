@@ -233,6 +233,11 @@ function NinesScale() {
               {ladderSorted.map(function(d, i) {
                 var barPct = (d.nines / scaleMax) * 100;
                 var rel = relToHuman(d.nines);
+                // Human Fatal is a different denominator than the all-crash human baseline,
+                // so don't label it as "safer" relative to Human Average.
+                if (d.category === "human" && d.event === "fatal crash") {
+                  rel = { text: "Fatal rate", sign: 0 };
+                }
                 var signColor = rel.sign > 0 ? "oklch(0.75 0.15 155)" : rel.sign < 0 ? "oklch(0.72 0.16 30)" : "#cbd5e1";
                 var isHuman = d.category === "human";
                 // Flip inline mi/event label to the LEFT of the dot once the bar is long enough that
