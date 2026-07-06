@@ -2,6 +2,8 @@
 
 The data this site shows lives in **`data.js`**. The dashboard imports from there and renders it. If you want to change a number, add a row, or swap a citation, that's the only file you need to touch — no JSX edits required for routine updates.
 
+The UI lives in `src/`: `src/App.jsx` (shell + hash-routed tab nav), `src/ui.jsx` (shared primitives and the custom chart components — no charting library), and one file per tab in `src/pages/`.
+
 This doc covers:
 1. [What's in `data.js`](#whats-in-datajs) — every export and what it powers
 2. [Source-quality conventions](#source-quality-conventions) — how to think about regulator vs. self-reported vs. crowdsourced data
@@ -30,7 +32,7 @@ Each entry has `{ url, label, type }`, where `type` is one of:
 - `lastUpdated`: shown in the header. Bump whenever data changes.
 
 ### `PAGES`
-The five top-level tabs. Each entry has `{ id, nav, title, sub }`. `nav` is the short label in the tab bar; `title` is the page heading; `sub` is the paragraph under the heading.
+The five top-level tabs (Overview, Waymo, Tesla FSD, Others, Road to Steeringless). Each entry has `{ id, nav, title, sub }`. `nav` is the short label in the tab bar; `title` is the page heading; `sub` is the paragraph under the heading. Tabs are hash-routed (`#waymo`, `#tesla`, …) so they can be deep-linked.
 
 ### `CAT_COLORS`
 Visual palette for the hero ladder. Three families (`tesla`, `waymo`, `human`), each an array of shades indexed by `intensity`. New rows in `NINES_SCALE_DATA` pick a color by `(category, intensity)`.
@@ -61,10 +63,10 @@ Shape:
 Shape: `{ label, value, sublabel, accent, source }`. `value` is a string (we keep formatting like `"50M mi"` or `"~460×"`).
 
 ### `CRASH_RATES`
-Table on the AV vs Humans page. Every value is a string of miles between events; `waymoGood`/`teslaGood` flag whether each system outperforms the human average (`true` = green, `false` = amber/red, `null` = no comparable data, renders as em-dash).
+Table on the Overview page (below the ladder). Every value is a string of miles between events; `waymoGood`/`teslaGood` flag whether each system outperforms the human average (`true` = green, `false` = amber/red, `null` = no comparable data, renders as em-dash).
 
 ### `WAYMO_CRASH_REDUCTION`
-By-severity comparison shown on both the Waymo and AV-vs-Humans pages. Numbers are incidents per million miles.
+By-severity comparison on the Waymo page. Numbers are incidents per million miles.
 
 ### `WAYMO_MILES_TIMELINE`
 Cumulative driverless miles by year (in millions). Drives the bar chart on the Waymo page.
@@ -73,10 +75,10 @@ Cumulative driverless miles by year (in millions). Drives the bar chart on the W
 Known limitations and incidents. `severity` is `"high" | "medium" | "info"`. `source` is optional — the two "Ongoing" entries don't cite a single article.
 
 ### `TESLA_VERSION_PROGRESS`
-Version-over-version improvement. Drives the custom horizontal-bar list on the Tesla page (we replaced Recharts there because it was rendering empty bars).
+Version-over-version improvement. Drives the horizontal-bar list (`HBarList` in `src/ui.jsx`) on the Tesla page.
 
-### `TESLA_FSD_SUPERVISED` / `TESLA_ROBOTAXI` / `TESLA_ROBOTAXI_SOURCE`
-Side-by-side fact lists. Each row is `{ label, value, source? }`. The Robotaxi card shares one source (`TESLA_ROBOTAXI_SOURCE`) at the bottom because every row in it derives from the same Fortune analysis.
+### `TESLA_FSD_SUPERVISED` / `TESLA_ROBOTAXI`
+Side-by-side fact lists. Each row is `{ label, value, source? }` — sources render inline next to the label.
 
 ### `TESLA_PROJECTION`
 The "If Tesla maintains ~2.7× per version" callout under the version chart. `{ multiplier, projections, caveat }` — three strings.
@@ -92,6 +94,9 @@ Non-technical blockers. `status` is `"achieved" | "partial" | "blocked"` and dri
 
 ### `EXPERT_TIMELINES`
 Consensus dates from McKinsey/S&P/WEF/BCG. `year` is a string so it can be `"Now"`, `"~2028"`, `"2040s–60s"`, etc.
+
+### `OTHERS_STATS` / `OTHER_PLAYERS`
+The Others page. `OTHER_PLAYERS` rows are `{ company, status, scale, detail, source }` where `status` is `"driverless" | "supervised" | "testing" | "dead"` (drives the chip color) and `scale` is whatever headline number that company discloses — rides, fleet size, or miles. They are intentionally NOT comparable across companies; the Note on the page says so.
 
 ### `CHILD_SAFETY`
 The single paragraph at the bottom of the Steeringless page. Mostly prose, but the canonical numbers (parent-attitude percentages, threshold miles) live here so they're easy to update.
@@ -183,7 +188,7 @@ The dashboard does NOT enforce any particular shape; the structured data file is
 Some content lives in the JSX, not `data.js`, because it's prose-shaped rather than data-shaped:
 
 - **The Note blocks** under each section. They explain methodology and caveats; they're tied to specific UI placement.
-- **The "key insight" callout** on the home page. It cites specific numbers that mirror data.js values (1,454 / 360× / 529,000) — when those data values change, also update this callout.
-- **Section titles and subtitles** for the in-page `<Section>` blocks. Page-level titles are in `PAGES` in data.js; section-level subtitles are still inline.
+- **The "key insight" callout** on the Overview page. It cites the ~360× gap multiplier — when that changes in data.js, also update the callout.
+- **Section titles and subtitles** for the in-page `<Section>` blocks. Page-level titles are in `PAGES` in data.js; section-level subtitles are still inline in `src/pages/*.jsx`.
 
-If you're updating a key home-page number (Tesla FSD best, human baseline, gap multiplier), search the JSX for the value as well — the key-insight callout uses the same numbers.
+If you're updating a key Overview number (Tesla FSD best, human baseline, gap multiplier), search `src/pages/` for the value as well — the key-insight callout and the crash-table footnote use the same numbers.
