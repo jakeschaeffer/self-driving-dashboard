@@ -90,6 +90,21 @@ export const SOURCES = {
   tcMayMobility:   { url: "https://techcrunch.com/2025/09/10/lyfts-modest-robotaxi-launch-highlights-growing-gap-with-uber-and-waymo/", label: "TechCrunch", type: "press" },
   tcMotional:      { url: "https://techcrunch.com/2026/01/11/motional-puts-ai-at-center-of-robotaxi-reboot-as-it-targets-2026-for-driverless-service/", label: "TechCrunch", type: "press" },
   scdCruise:       { url: "https://www.smartcitiesdive.com/news/general-motors-shuts-cruise-robotaxi-unit-mary-barra/735205/", label: "Smart Cities Dive", type: "press" },
+
+  // ---- Aug 2026 research pass — Waymo ----
+  waymoSafetyJun26:{ url: "https://waymo.com/blog/shorts/safetydata-june26/", label: "Waymo Jun 2026 safety update", type: "company" },
+  waymoUpdates:    { url: "https://waymo.com/updates/", label: "Waymo Updates", type: "company" },
+  waymoNewRoCities:{ url: "https://waymo.com/blog/shorts/ro-den-lv-sd-tmpa/", label: "Waymo Jul 2026", type: "company" },
+  alphabetQ2:      { url: "https://9to5google.com/2026/07/22/alphabet-q2-2026-earnings/", label: "Alphabet Q2 2026", type: "company" },
+  iihsWaymo:       { url: "https://www.iihs.org/news/detail/waymos-driverless-cars-crash-less-often-than-people", label: "IIHS Jul 2026", type: "academic" },
+  electrekIihs:    { url: "https://electrek.co/2026/07/25/waymo-is-2-3-safer-than-a-human-driver-says-iihs-with-some-caveats/", label: "Electrek / IIHS", type: "press" },
+  tcWaymoRides:    { url: "https://techcrunch.com/2026/03/27/waymo-skyrocketing-ridership-in-one-chart/", label: "TechCrunch", type: "press" },
+  govtechFleet:    { url: "https://www.govtech.com/transportation/waymo-files-software-recall-on-nearly-3-800-robotaxis", label: "GovTech / NHTSA filing", type: "press" },
+  nbcdfwDallas:    { url: "https://www.nbcdfw.com/news/local/pedestrian-killed-suv-crash-waymo-dallas/4060058/", label: "NBC DFW", type: "press" },
+  templetonDallas: { url: "https://www.forbes.com/sites/bradtempleton/2026/08/10/waymo-fatality-likely-not-at-fault-here-are-new-details-and-what-ifs/", label: "Forbes / Templeton", type: "press" },
+  tcFreewayReturn: { url: "https://techcrunch.com/2026/07/29/waymo-robotaxis-are-starting-to-return-to-freeways/", label: "TechCrunch", type: "press" },
+  ntsbSchoolBus:   { url: "https://www.ntsb.gov/investigations/Pages/HWY26FH008.aspx", label: "NTSB HWY26FH008", type: "regulator" },
+
 };
 
 // ============================================================
@@ -116,7 +131,7 @@ export const PAGES = [
     id: "waymo",
     nav: "Waymo",
     title: "Waymo",
-    sub: "220M+ driverless miles. Peer-reviewed safety data.",
+    sub: "220.6M rider-only miles through Mar 2026, across 11 commercial metros. Company safety data alongside the independent IIHS study — and one fatality.",
   },
   {
     id: "tesla",
@@ -189,7 +204,11 @@ export const NINES_SCALE_DATA = [
   { nines: 4.8, miles: 57000,      label: "Tesla Robotaxi",  sublabel: "Austin crash rate",           event: "crash",          category: "tesla", intensity: 4, source: SOURCES.fortune },
   { nines: 5.7, miles: 529000,     label: "Human Average",   sublabel: "All police-reported crashes", event: "crash",          category: "human", intensity: 0, isBaseline: true, source: SOURCES.nhtsa },
   { nines: 6.1, miles: 1350000,    label: "Waymo",           sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", intensity: 1, source: SOURCES.kusano2025 },
-  { nines: 7.7, miles: 50000000,   label: "Waymo",           sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", intensity: 2, source: SOURCES.waymoSafety },
+  // 50M is Waymo's own serious-injury figure as of early 2026. The Jun 2026 update
+  // publishes 0.01 vs 0.23 crashes per million miles (94% fewer) — one significant
+  // figure, too rounded to derive a precise miles-per-event number, so the number
+  // stands and only the as-of date moves. See the Note on the Waymo page.
+  { nines: 7.7, miles: 50000000,   label: "Waymo",           sublabel: "Serious injury crash rate (as of early 2026)", event: "serious injury", category: "waymo", intensity: 2, source: SOURCES.waymoSafety },
   { nines: 7.9, miles: 86000000,   label: "Human Fatal",     sublabel: "Fatal crash rate only",       event: "fatal crash",    category: "human", intensity: 1, isBaseline: true, source: SOURCES.nhtsa },
 ];
 
@@ -216,10 +235,12 @@ export const HOME_STATS = [
 ];
 
 export const WAYMO_STATS = [
-  { label: "Driverless miles",             value: "220M+",  sublabel: "Rider-only, through Mar 2026",  accent: "#3b82f6", source: SOURCES.waymoSafety },
-  { label: "Weekly rides",                 value: "500K",   sublabel: "Target: 1M/week by end of 2026", accent: "#60a5fa", source: SOURCES.alphabetQ1 },
-  { label: "Safety vs humans",             value: "↓94%",   sublabel: "Fewer serious-injury crashes",  accent: "#22c55e", source: SOURCES.waymoSafety },
-  { label: "Cities",                       value: "11",     sublabel: "1,400+ sq mi service area",     accent: "#8b5cf6", source: SOURCES.electrekWaymo1400 },
+  { label: "Driverless miles",             value: "220.6M", sublabel: "Rider-only, through Mar 2026",  accent: "#3b82f6", source: SOURCES.waymoSafety },
+  { label: "Weekly rides",                 value: "~500K",  sublabel: "Flat since Q1 2026; 1M/week is the year-end target", accent: "#60a5fa", source: SOURCES.tcWaymoRides },
+  { label: "IIHS (independent)",           value: "↓68%",   sublabel: "Fewer police-reportable crashes per mile, 2021–24", accent: "#22c55e", source: SOURCES.iihsWaymo },
+  { label: "Waymo's own claim",            value: "↓94%",   sublabel: "Fewer serious-injury crashes — self-reported",   accent: "#4ade80", source: SOURCES.waymoSafetyJun26 },
+  { label: "Cities",                       value: "11",     sublabel: "Commercial metros + 4 driverless, not yet public", accent: "#8b5cf6", source: SOURCES.waymoUpdates },
+  { label: "Fleet",                        value: "~3.8–4K", sublabel: "From NHTSA recall populations — no official count", accent: "#a78bfa", source: SOURCES.govtechFleet },
 ];
 
 export const TESLA_STATS = [
@@ -233,7 +254,7 @@ export const TESLA_STATS = [
 // CRASH_RATES — table on the AV vs Humans page.
 //
 // All values are miles between events. Strings (not numbers) so we can show
-// approximate values like "~5M" or "0 fatalities*".
+// approximate values like "~5M" or "1 fatality*".
 //
 // goodFlag: true = outperforming human average (green), false = worse (amber/red),
 //           null = no comparable data ("—")
@@ -243,22 +264,57 @@ export const CRASH_RATES = [
   { metric: "Police-reported crash", human: "529K", waymo: "~476K",         tesla: "~57K",     waymoGood: false, teslaGood: false, source: SOURCES.nhtsa },
   { metric: "Injury crash",          human: "252K", waymo: "1.35M",         tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.kusano2025 },
   { metric: "Serious injury crash",  human: "~5M",  waymo: "50M",           tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.waymoSafety },
-  { metric: "Fatal crash",           human: "86M",  waymo: "0 fatalities*", tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.nhtsa },
+  // One fatality in 220.6M rider-only miles (Dallas, 7 Aug 2026). Still a lower rate
+  // than the 86M-mile human fatal-crash baseline, hence waymoGood: true — but the
+  // footnote under the table carries the circumstances, and it must stay there.
+  { metric: "Fatal crash",           human: "86M",  waymo: "1 fatality*",   tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.nhtsa },
 ];
 
 // ============================================================
 // WAYMO_CRASH_REDUCTION — by severity, for the Waymo & Comparison pages.
-// Numbers are incidents per million miles.
+// Numbers are incidents per million miles (IPMM).
+//
+// waymo/human are null where the publisher gives a reduction percentage but no
+// underlying rate — the card then shows the reduction alone rather than inventing
+// a denominator. Waymo rows are self-reported over 220.6M rider-only miles through
+// Mar 2026; the Swiss Re row is a separate property-damage study from Dec 2024.
 // ============================================================
 
 export const WAYMO_CRASH_REDUCTION = [
-  { category: "Serious injury+",         waymo: 0.02, human: 0.23, reduction: 90 },
-  { category: "All injury",              waymo: 0.74, human: 3.97, reduction: 81 },
-  { category: "Airbag deploy",           waymo: 0.26, human: 1.44, reduction: 82 },
-  { category: "Pedestrian injury",       waymo: 0.05, human: 0.59, reduction: 92 },
-  { category: "Cyclist injury",          waymo: 0.03, human: 0.18, reduction: 83 },
-  { category: "Property dmg (Swiss Re)", waymo: 0.36, human: 3.08, reduction: 88 },
+  { category: "Serious injury+",         waymo: 0.01, human: 0.23, reduction: 94, source: SOURCES.waymoSafetyJun26 },
+  { category: "All injury",              waymo: 0.71, human: 3.91, reduction: 82, source: SOURCES.waymoSafetyJun26 },
+  { category: "Airbag deploy",           waymo: 0.30, human: 1.68, reduction: 82, source: SOURCES.waymoSafetyJun26 },
+  { category: "Pedestrian injury",       waymo: null, human: null, reduction: 93, source: SOURCES.waymoSafetyJun26 },
+  { category: "Cyclist injury",          waymo: null, human: null, reduction: 84, source: SOURCES.waymoSafetyJun26 },
+  { category: "Motorcyclist injury",     waymo: null, human: null, reduction: 84, source: SOURCES.waymoSafetyJun26 },
+  { category: "Property dmg (Swiss Re)", waymo: 0.36, human: 3.08, reduction: 88, source: SOURCES.swissRe },
 ];
+
+// ============================================================
+// WAYMO_IIHS_STUDY — the independent IIHS analysis (Eric Teoh, published
+// 2026-07-23). Highest-quality non-company evidence the site carries, so it gets
+// its own shape rather than being folded into WAYMO_CRASH_REDUCTION (different
+// mileage base, different period, different crash definition).
+// ============================================================
+
+export const WAYMO_IIHS_STUDY = {
+  headline: [
+    { label: "Police-reportable crashes", reduction: 68 },
+    { label: "Single-vehicle crashes",    reduction: 85 },
+    { label: "Injury crashes",            reduction: 81 },
+  ],
+  rate: { waymo: "1.28", human: "4.06", unit: "police-reportable crashes per million vehicle miles travelled" },
+  byCity: [
+    { city: "Phoenix",       change: -76 },
+    { city: "Los Angeles",   change: -71 },
+    { city: "San Francisco", change: -35 },
+    { city: "Austin",        change: 4, note: "small sample" },
+  ],
+  basis: "~50M Waymo driverless miles (2021–2024) against ~222B human miles. 89 police-reportable Waymo crashes, 64 of them in driverless mode; about 25% of reported crashes were discarded in data cleaning.",
+  caveats: "Austin is the one city where Waymo came out worse, on a small sample. Waymo also drives mostly on low-speed streets (50% of its crashes are under 25 mph, vs. 8% for humans), close to half its miles carry no occupant, and it shows higher crash rates in the dark. IIHS adds that US AV crash-reporting infrastructure is not adequate for large-scale monitoring.",
+  source: SOURCES.iihsWaymo,
+  caveatSource: SOURCES.electrekIihs,
+};
 
 // ============================================================
 // WAYMO_MILES_TIMELINE — cumulative driverless miles by year (in millions).
@@ -275,18 +331,21 @@ export const WAYMO_MILES_TIMELINE = [
 ];
 
 // ============================================================
-// WAYMO_INCIDENTS — known limitations and incidents.
+// WAYMO_INCIDENTS — known limitations and incidents. Newest first.
 //
 // severity: "high" | "medium" | "info"  (drives the left border color)
 // source: optional — null for "Ongoing" entries that don't have a single citation
 // ============================================================
 
 export const WAYMO_INCIDENTS = [
+  { date: "Aug 2026", text: "First fatality involving a Waymo: a pedestrian struck by an SUV in Dallas was thrown into oncoming lanes and then contacted at ~5 mph by an unoccupied Waymo, and died. Police preliminary findings and independent analysis indicate Waymo was likely not at fault.", severity: "high", source: SOURCES.nbcdfwDallas },
+  { date: "Jul 2026", text: "Freeway rides resumed in Phoenix on Jul 29, after all freeway operations were suspended on May 19 following 13 incidents of driving into closed work zones; other cities to follow", severity: "medium", source: SOURCES.tcFreewayReturn },
   { date: "Jun 2026", text: "Recall of ~4,000 vehicles after 13 instances of entering closed highway work zones", severity: "medium", source: SOURCES.tcWorkZone },
   { date: "May 2026", text: "Full-fleet recall (3,791 vehicles) after a San Antonio flooded-road incident — OTA fix", severity: "medium", source: SOURCES.electrekFlood },
-  { date: "Jan 2026", text: "NHTSA probe: robotaxi struck a child near a Santa Monica school",   severity: "high",   source: SOURCES.foxSantaMonica },
-  { date: "Oct 2025", text: "NHTSA investigation into ~20 school bus passing incidents in Austin; 3,067-vehicle recall followed", severity: "high", source: SOURCES.npr },
+  { date: "Mar 2026", text: "NTSB opened an investigation into Waymo vehicles passing stopped school buses in at least two states; Austin ISD logged 19 instances in the 2025–26 school year", severity: "high", source: SOURCES.ntsbSchoolBus },
+  { date: "Jan 2026", text: "NHTSA probe (PE26001): robotaxi struck a child near a Santa Monica school", severity: "high",   source: SOURCES.foxSantaMonica },
   { date: "Dec 2025", text: "SF power outage caused some vehicles to freeze in intersections",   severity: "medium", source: SOURCES.slashdot },
+  { date: "Oct 2025", text: "NHTSA investigation into ~20 school bus passing incidents in Austin; 3,067-vehicle recall followed", severity: "high", source: SOURCES.npr },
   { date: "Ongoing",  text: "Operates only in pre-mapped geofenced areas; no snow capability",    severity: "info",   source: null },
   { date: "Ongoing",  text: "Remote operators assist with edge cases — not fully independent",    severity: "info",   source: null },
 ];
@@ -414,7 +473,7 @@ export const CHILD_SAFETY = {
   parentsComfortableDriving: "63%",
   parentsLetChildRideAlone: "21%",
   impliedCrashThreshold: "roughly 1 crash per 10M+ miles",
-  waymoSeriousInjuryRate: "about one event per 50 million miles",
+  waymoSeriousInjuryRate: "about one event per 50 million miles, as of early 2026",
   source: SOURCES.chop,
 };
 
