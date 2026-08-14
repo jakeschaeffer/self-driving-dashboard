@@ -129,7 +129,7 @@ export const SOURCES = {
 // ============================================================
 
 export const SITE = {
-  lastUpdated: "Jul 2026", // shown in the header. Update whenever data changes.
+  lastUpdated: "Aug 2026", // shown in the header. Update whenever data changes.
 };
 
 // ============================================================
@@ -245,10 +245,14 @@ NINES_SCALE_DATA.forEach(function(d) { d.color = CAT_COLORS[d.category][d.intens
 // ============================================================
 
 export const HOME_STATS = [
-  { label: "Waymo best",                   value: "50M mi",   sublabel: "per serious injury crash",       accent: "#3b82f6", source: SOURCES.waymoSafety },
-  { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement",     accent: "#f59e0b", source: SOURCES.teslaTracker },
+  { label: "Waymo best",                   value: "50M mi",   sublabel: "per serious injury crash · as of early 2026", accent: "#3b82f6", source: SOURCES.waymoSafety },
+  { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement · crowdsourced",   accent: "#f59e0b", source: SOURCES.teslaTracker },
   { label: "Human baseline",               value: "529K mi",  sublabel: "per police-reported crash",      accent: "#a3a3a3", source: SOURCES.nhtsa },
-  { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "vs. Elluswamy 670K mi target",   accent: "#ef4444", source: SOURCES.electrekMusk },
+  // Two gap multipliers appear on this site and they use different denominators.
+  // Keep both spelled out: 529K ÷ 1,454 ≈ 360× (human average, used in the Overview
+  // callout and the ladder's vs-Human column) and 670K ÷ 1,454 ≈ 460× (Elluswamy's
+  // unsupervised target, used here). Recompute both if 1,454 ever changes.
+  { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "1,454 mi vs. Elluswamy's 670K mi target",     accent: "#ef4444", source: SOURCES.electrekMusk },
 ];
 
 export const WAYMO_STATS = [
@@ -596,6 +600,7 @@ export const OTHER_PLAYERS = [
 // ============================================================
 
 export const FOOTER_SOURCES = [
-  "NHTSA", "CA DMV", "Waymo Safety Impact", "Swiss Re", "Kusano et al. 2025",
-  "teslafsdtracker.com", "AMCI Testing", "Fortune", "Electrek", "Baidu IR", "Aurora", "McKinsey",
+  "NHTSA", "CA DMV", "NTSB", "IIHS", "Waymo Safety Impact", "Swiss Re", "Kusano et al. 2025",
+  "Tesla IR", "teslafsdtracker.com", "AMCI Testing", "Koopman", "Fortune", "Electrek", "Bloomberg",
+  "Baidu IR", "Aurora", "McKinsey",
 ];
