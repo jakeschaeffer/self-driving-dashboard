@@ -66,7 +66,10 @@ Shape: `{ label, value, sublabel, accent, source }`. `value` is a string (we kee
 Table on the Overview page (below the ladder). Every value is a string of miles between events; `waymoGood`/`teslaGood` flag whether each system outperforms the human average (`true` = green, `false` = amber/red, `null` = no comparable data, renders as em-dash).
 
 ### `WAYMO_CRASH_REDUCTION`
-By-severity comparison on the Waymo page. Numbers are incidents per million miles.
+By-severity comparison on the Waymo page. Numbers are incidents per million miles (IPMM), self-reported by Waymo except the Swiss Re property-damage row. `waymo`/`human` may be `null` where the publisher gives a reduction percentage but no underlying rate — `PairStatGrid` then shows the reduction alone instead of inventing a denominator. Each row carries its own `source`.
+
+### `WAYMO_IIHS_STUDY`
+The independent IIHS analysis (Eric Teoh, published 2026-07-23) — its own section on the Waymo page. Deliberately kept separate from `WAYMO_CRASH_REDUCTION`: different mileage base (~50M miles, 2021–2024), different period, different crash definition. `{ headline[], rate, byCity[], basis, caveats, source, caveatSource }`. `byCity[].change` is signed — Austin is `+4` (worse) and renders red. Keep it that way; dropping the one city where Waymo lost would make the block dishonest.
 
 ### `WAYMO_MILES_TIMELINE`
 Cumulative driverless miles by year (in millions). Drives the bar chart on the Waymo page.
@@ -75,13 +78,16 @@ Cumulative driverless miles by year (in millions). Drives the bar chart on the W
 Known limitations and incidents. `severity` is `"high" | "medium" | "info"`. `source` is optional — the two "Ongoing" entries don't cite a single article.
 
 ### `TESLA_VERSION_PROGRESS`
-Version-over-version improvement. Drives the horizontal-bar list (`HBarList` in `src/ui.jsx`) on the Tesla page.
+Version-over-version improvement. Drives the horizontal-bar list (`HBarList` in `src/ui.jsx`) on the Tesla page. The optional `metric` field marks rows the source describes as *city* miles per critical disengagement (v14.1, v14.2 — GLJ Research citing teslafsdtracker.com); those rows render with a `· city mi` qualifier. Do not merge them with the unqualified tracker averages, and do not read the series as monotonic: it peaks at 4,109 (v14.1, Oct 2025) and falls to 809 (v14.2, Mar 2026).
 
 ### `TESLA_FSD_SUPERVISED` / `TESLA_ROBOTAXI`
-Side-by-side fact lists. Each row is `{ label, value, source? }` — sources render inline next to the label.
+Side-by-side fact lists. Each row is `{ label, value, source? }` — sources render inline next to the label. Labels are `white-space: nowrap` in the Robotaxi card, so keep them short and let long text live in `value`, which wraps.
+
+### `TESLA_SAFETY_TENSION`
+The two-column "Two readings of the same system" block on the Tesla page: Tesla's self-reported collision rate against NHTSA's Standing General Order crash counts. Each column is `{ title, kind, accent, rows[], sources[], rebuttal, rebuttalSource }`. The `rebuttal` is not optional decoration — a self-reported number carries the independent critique (Koopman) and the regulator's raw count carries Tesla's normalization objection. Don't render one column without the other.
 
 ### `TESLA_PROJECTION`
-The "If Tesla maintains ~2.7× per version" callout under the version chart. `{ multiplier, projections, caveat }` — three strings.
+The extrapolation callout under the version chart. `{ multiplier, projections, caveat }` — three strings. As of Aug 2026 the ~2.7×-per-version trend has reversed, so the callout is framed as what the rate *would have* implied and the `caveat` carries the reversal.
 
 ### `MUSK_PREDICTIONS`
 Track record of public claims vs. what shipped. `{ year, claim, result, source }`.
@@ -170,7 +176,7 @@ If a new release looks like a "system + miles per event + source" (which most sa
 If you have data that genuinely doesn't fit (e.g. a per-state regulatory map, a video-evidence table, a public-trust survey time series):
 
 1. Add a new export to `data.js` with a clear name and shape comment.
-2. Add a new `<Section>` to the relevant page in `autonomous-driving-dashboard.jsx`.
+2. Add a new `<Section>` to the relevant page file in `src/pages/` (`Overview.jsx`, `Waymo.jsx`, `Tesla.jsx`, `Others.jsx`, `Steeringless.jsx`).
 3. Render it. Keep the shape simple — `{ label, value, source }` is fine for most lists.
 4. Add the new shape to "What's in `data.js`" above so the next person knows it exists.
 
@@ -188,7 +194,11 @@ The dashboard does NOT enforce any particular shape; the structured data file is
 Some content lives in the JSX, not `data.js`, because it's prose-shaped rather than data-shaped:
 
 - **The Note blocks** under each section. They explain methodology and caveats; they're tied to specific UI placement.
-- **The "key insight" callout** on the Overview page. It cites the ~360× gap multiplier — when that changes in data.js, also update the callout.
+- **The "key insight" callout** on the Overview page. It cites *both* gap multipliers, with their denominators spelled out: `529K ÷ 1,454 ≈ 360×` (the human crash average, which is also what the ladder's vs-Human column uses — `relToHuman()` in `Overview.jsx` divides by `HUMAN_MILES`, read off the baseline row, rather than by the rounded `nines`) and `670K ÷ 1,454 ≈ 460×` (Elluswamy's unsupervised target, which is what the `HOME_STATS`/`TESLA_STATS` gap cards use). They are not in conflict, but they only read that way if both denominators stay visible. If the Tesla figure changes, recompute both.
+- **The crash-table footnote** on the Overview page. It carries the circumstances of the single Waymo fatality; `CRASH_RATES` only has room for the string `"1 fatality*"`, and the number is meaningless without the footnote.
 - **Section titles and subtitles** for the in-page `<Section>` blocks. Page-level titles are in `PAGES` in data.js; section-level subtitles are still inline in `src/pages/*.jsx`.
 
 If you're updating a key Overview number (Tesla FSD best, human baseline, gap multiplier), search `src/pages/` for the value as well — the key-insight callout and the crash-table footnote use the same numbers.
+
+### A note on rounding published figures
+Waymo's Jun 2026 update gives its serious-injury rate as `0.01` crashes per million miles against a `0.23` benchmark. One significant figure spans 67M–200M miles per event, and the "47 fewer crashes" framing in the same release implies something closer to 60–75M — the published values are too coarse to support a precise miles-between-events number. The site therefore keeps its earlier **50M mi per serious injury crash** and dates it (`as of early 2026`) rather than restating it upward. Prefer this move — add the as-of date, keep the number — over deriving a precise figure from a rounded one.

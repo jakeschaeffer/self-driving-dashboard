@@ -15,7 +15,7 @@ export default function Others() {
     <div>
       <StatCards stats={OTHERS_STATS} />
 
-      <Section title="Who else is on the road" subtitle="Status and scale as of Jul 2026, using each company's own disclosed metric.">
+      <Section title="Who else is on the road" subtitle="Status and scale as of Aug 2026, using each company's own disclosed metric.">
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           {OTHER_PLAYERS.map((p, i) => {
             const chip = STATUS_CHIPS[p.status];

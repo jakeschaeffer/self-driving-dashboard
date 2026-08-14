@@ -1,18 +1,28 @@
 // Overview — the hero ladder plus the AV-vs-human crash-rate table.
 import { useState, useEffect } from "react";
-import { NINES_SCALE_DATA, HOME_STATS, CRASH_RATES } from "../../data.js";
+import { NINES_SCALE_DATA, HOME_STATS, CRASH_RATES, SOURCES } from "../../data.js";
 import { MONO, CARD, formatMiles, useNarrow, Src, SourceLine, Note, StatCards, Section } from "../ui.jsx";
 
-const HUMAN_NINES = 5.7; // NHTSA all-crash rate — the anchor the ladder references.
+// NHTSA all-crash rate (529K mi/crash) — the anchor the ladder references, and the
+// denominator behind every "×  safer/worse" figure in the vs-Human column and in the
+// key-insight callout below. The stat cards' ~460× figure uses a *different*
+// denominator (Elluswamy's 670K-mile unsupervised target) and says so on its face.
+const HUMAN_NINES = 5.7;
 const SCALE_MAX = 8.5;
 
-// Human-relative framing: "3.2× safer" / "360× worse" / "Match".
-function relToHuman(nines) {
-  const diff = nines - HUMAN_NINES;
-  if (Math.abs(diff) < 0.05) return { text: "Match", sign: 0 };
-  const mul = Math.pow(10, Math.abs(diff));
+// The canonical human-average mileage (529K), read off the baseline row rather
+// than restated. Ratios are computed from `miles`, not from `nines` — `nines` is
+// rounded to one decimal for the bar positions, and deriving the multiplier from
+// it printed "316×" where the callout below says "~360×" for the same system.
+const HUMAN_MILES = NINES_SCALE_DATA.find((d) => d.isBaseline && d.event === "crash").miles;
+
+// Human-relative framing: "2.6× safer" / "364× worse" / "Match".
+function relToHuman(miles) {
+  const ratio = miles / HUMAN_MILES;
+  if (Math.abs(Math.log10(ratio)) < 0.05) return { text: "Match", sign: 0 };
+  const mul = ratio > 1 ? ratio : 1 / ratio;
   const fmt = mul >= 10 ? Math.round(mul).toString() : mul.toFixed(1);
-  return { text: fmt + "× " + (diff > 0 ? "safer" : "worse"), sign: diff > 0 ? 1 : -1 };
+  return { text: fmt + "× " + (ratio > 1 ? "safer" : "worse"), sign: ratio > 1 ? 1 : -1 };
 }
 
 function Ladder() {
@@ -65,7 +75,7 @@ function Ladder() {
         // so don't label it "safer" relative to Human Average.
         const rel = d.category === "human" && d.event === "fatal crash"
           ? { text: "Fatal rate", sign: 0 }
-          : relToHuman(d.nines);
+          : relToHuman(d.miles);
         const signColor = rel.sign > 0 ? "oklch(0.75 0.15 155)" : rel.sign < 0 ? "oklch(0.72 0.16 30)" : "#cbd5e1";
         // Flip the inline mi/event label left of the dot once the bar is long enough
         // that a right-side label would crash into the vs-Human column.
@@ -167,7 +177,7 @@ function CrashTable() {
     { label: "Source", sub: null, align: "left" },
   ];
   const cell = (value, color) => {
-    // "—" stays plain; "0 fatalities*" has its footnote; plain numbers get a "mi" unit.
+    // "—" stays plain; "1 fatality*" has its footnote; plain numbers get a "mi" unit.
     const hasMiUnit = value !== "—" && !/[a-z]/.test(value);
     return (
       <td style={{ padding: "12px 14px", textAlign: "right", fontSize: "13px", fontFamily: MONO, fontWeight: 600, color, whiteSpace: "nowrap" }}>
@@ -244,7 +254,10 @@ export default function Overview() {
           <div style={{ fontSize: "13px", color: "#e2e8f0", lineHeight: 1.7 }}>
             <strong style={{ color: "#60a5fa" }}>The key insight:</strong> every step on this chart is a 10× jump.
             Waymo has crossed the human baseline on crash metrics — within carefully mapped domains.
-            Tesla FSD would need to improve <strong>~360×</strong> to match the average human driver.
+            Tesla FSD's best crowdsourced figure, 1,454 miles per critical disengagement, is
+            {" "}<strong>~360×</strong> short of the 529K-mile human crash average and
+            {" "}<strong>~460×</strong> short of the 670K-mile bar Tesla's own autopilot lead has
+            described for unsupervised driving. Same numerator, two different denominators.
           </div>
         </div>
       </Section>
@@ -252,11 +265,16 @@ export default function Overview() {
       <Section title="Crash rates vs. human drivers" subtitle="Miles between events — higher is safer. Green = better than the human average.">
         <CrashTable />
         <SourceLine>
-          * Waymo: zero fatalities in 220M+ driverless miles. Tesla robotaxi data from <Src href="https://fortune.com/2026/02/26/tesla-robotaxis-4x-8x-worse-than-humans-at-driving-safety-record-crashes/">Fortune analysis</Src> (Feb 2026).
+          * One fatality in 220.6M rider-only miles. On 7 Aug 2026 in Dallas, a pedestrian struck by an SUV was thrown into
+          oncoming lanes and then contacted at ~5 mph by an unoccupied Waymo, and died
+          (<Src href={SOURCES.nbcdfwDallas.url}>{SOURCES.nbcdfwDallas.label}</Src>).
+          Police preliminary findings and independent analysis indicate Waymo was likely not at fault
+          (<Src href={SOURCES.templetonDallas.url}>{SOURCES.templetonDallas.label}</Src>).
+          Tesla robotaxi data from <Src href={SOURCES.fortune.url}>Fortune analysis</Src> (Feb 2026).
         </SourceLine>
         <Note>
           Disengagements and crashes are different metrics — Tesla's "miles per intervention" and Waymo's "miles per crash" are not directly comparable.
-          Human crash data underreports minor incidents by ~60% (<Src href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813762">NHTSA</Src>),
+          Human crash data underreports minor incidents by ~60% (<Src href={SOURCES.nhtsa.url}>{SOURCES.nhtsa.label}</Src>),
           while AVs report virtually every contact event.
         </Note>
       </Section>

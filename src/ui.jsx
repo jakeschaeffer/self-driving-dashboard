@@ -113,7 +113,7 @@ export function HBarList({ rows }) {
     <div style={{ ...CARD, display: "flex", flexDirection: "column", gap: "10px", padding: "16px 20px" }}>
       {rows.map((r, i) => (
         <div key={i} style={{
-          display: "grid", gridTemplateColumns: "60px 1fr 88px",
+          display: "grid", gridTemplateColumns: "78px 1fr 88px",
           gap: "12px", alignItems: "center",
         }}>
           <div>
@@ -170,30 +170,45 @@ export function ColumnChart({ data, accent = "#2563eb" }) {
 }
 
 // Grid of A-vs-B pair cards with a reduction badge.
-// items: { category, waymo, human, reduction }
+// items: { category, waymo, human, reduction, source? }
+// waymo/human may be null — the publisher gave a reduction but no underlying
+// rate. The card then leads with the reduction instead of showing empty numbers.
 export function PairStatGrid({ items, aName = "Waymo", bName = "Human", unit }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-      {items.map((d, i) => (
-        <div key={i} style={{ ...CARD, padding: "14px 16px" }}>
-          <div style={{
-            fontSize: "10px", color: "#64748b", marginBottom: "10px", fontWeight: 500,
-            textTransform: "uppercase", letterSpacing: "0.05em",
-          }}>{d.category}</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "6px" }}>
-            <div>
-              <div style={{ fontSize: "20px", fontWeight: 700, color: "#3b82f6", fontFamily: MONO }}>{d.waymo}</div>
-              <div style={{ fontSize: "8px", color: "#4b5563", textTransform: "uppercase" }}>{aName}</div>
-            </div>
-            <div style={{ fontSize: "12px", color: "#374151" }}>vs</div>
-            <div>
-              <div style={{ fontSize: "20px", fontWeight: 700, color: "#6b7280", fontFamily: MONO }}>{d.human}</div>
-              <div style={{ fontSize: "8px", color: "#4b5563", textTransform: "uppercase" }}>{bName}</div>
-            </div>
+      {items.map((d, i) => {
+        const hasRates = d.waymo != null && d.human != null;
+        return (
+          <div key={i} style={{ ...CARD, padding: "14px 16px" }}>
+            <div style={{
+              fontSize: "10px", color: "#64748b", marginBottom: "10px", fontWeight: 500,
+              textTransform: "uppercase", letterSpacing: "0.05em",
+            }}>{d.category}</div>
+            {hasRates ? (
+              <>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "6px" }}>
+                  <div>
+                    <div style={{ fontSize: "20px", fontWeight: 700, color: "#3b82f6", fontFamily: MONO }}>{d.waymo}</div>
+                    <div style={{ fontSize: "8px", color: "#4b5563", textTransform: "uppercase" }}>{aName}</div>
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#374151" }}>vs</div>
+                  <div>
+                    <div style={{ fontSize: "20px", fontWeight: 700, color: "#6b7280", fontFamily: MONO }}>{d.human}</div>
+                    <div style={{ fontSize: "8px", color: "#4b5563", textTransform: "uppercase" }}>{bName}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "#22c55e", fontFamily: MONO }}>{"↓"} {d.reduction}%</div>
+              </>
+            ) : (
+              <div style={{ marginBottom: "6px" }}>
+                <div style={{ fontSize: "20px", fontWeight: 700, color: "#22c55e", fontFamily: MONO }}>{"↓"} {d.reduction}%</div>
+                <div style={{ fontSize: "8px", color: "#4b5563", textTransform: "uppercase" }}>rate not published</div>
+              </div>
+            )}
+            {d.source && <div style={{ marginTop: "8px" }}><Src href={d.source.url}>{d.source.label}</Src></div>}
           </div>
-          <div style={{ fontSize: "12px", fontWeight: 700, color: "#22c55e", fontFamily: MONO }}>{"↓"} {d.reduction}%</div>
-        </div>
-      ))}
+        );
+      })}
       {unit && (
         <div style={{ gridColumn: "1 / -1", fontSize: "10px", color: "#374151" }}>{unit}</div>
       )}
