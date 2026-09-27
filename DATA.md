@@ -81,7 +81,7 @@ Shape: `{ label, value, sublabel, series?, source }`. `value` is a string (we ke
 The "Like for like" table on the Overview page. `CRASH_RATES_FOOTNOTE` is the line under it that explains the `*` cells. Every value is a string of miles between events; `waymoGood`/`teslaGood` flag whether each system outperforms the human average (`true` = ▲ green, `false` = ▼ red, `null` = no comparable data, renders as em-dash). On phones the table stacks into one block per row.
 
 ### `WAYMO_CRASH_REDUCTION`
-By-severity comparison on the Waymo page. Numbers are incidents per million miles.
+By-severity comparison on the Waymo page: `{ category, reduction, waymo?, human?, source }`. `reduction` is the % fewer crashes than the human benchmark and drives the bar; `waymo`/`human` are incidents per million miles, shown only when the source publishes them.
 
 ### `WAYMO_MILES_TIMELINE`
 Cumulative driverless miles (in millions), `{ date: "YYYY-MM", period, miles }`. `date` places the point on a true time axis in the Waymo "odometer" chart; `period` is its label.

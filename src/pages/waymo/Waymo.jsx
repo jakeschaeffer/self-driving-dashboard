@@ -28,10 +28,11 @@ export default function Waymo() {
         subtitle="Waymo against the human benchmark for the same roads, one row per kind of crash."
       >
         <ReductionBars />
-        <p><SourceTag source={SOURCES.kusano2025} /> <SourceTag source={SOURCES.swissRe} /></p>
+        <p><SourceTag source={SOURCES.waymoSep26} /> <SourceTag source={SOURCES.swissRe} /></p>
         <Note>
-          Swiss Re compared Waymo against newer vehicles (2018–2021) with driver-assist features, the fairest
-          human benchmark available. Human crash data misses about 60% of minor incidents
+          Injury rows are Waymo's own figures through June 2026, using a method published in peer-reviewed
+          work (<SourceTag source={SOURCES.kusano2025} />). Swiss Re compared Waymo against newer vehicles
+          (2018–2021) with driver-assist features. Human crash data misses about 60% of minor incidents
           (<SourceTag source={SOURCES.nhtsa} />), while AVs report nearly every contact event.
         </Note>
       </Section>

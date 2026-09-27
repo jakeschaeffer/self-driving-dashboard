@@ -90,6 +90,46 @@ export const SOURCES = {
   tcMayMobility:   { url: "https://techcrunch.com/2025/09/10/lyfts-modest-robotaxi-launch-highlights-growing-gap-with-uber-and-waymo/", label: "TechCrunch", type: "press" },
   tcMotional:      { url: "https://techcrunch.com/2026/01/11/motional-puts-ai-at-center-of-robotaxi-reboot-as-it-targets-2026-for-driverless-service/", label: "TechCrunch", type: "press" },
   scdCruise:       { url: "https://www.smartcitiesdive.com/news/general-motors-shuts-cruise-robotaxi-unit-mary-barra/735205/", label: "Smart Cities Dive", type: "press" },
+
+  // 2026 updates (Sep 2026 research pass) — Tesla
+  teslaQ2:         { url: "https://assets-ir.tesla.com/tesla-contents/IR/TSLA-Q2-2026-Update.pdf", label: "Tesla Q2 2026", type: "company" },
+  teslaFsdSafety:  { url: "https://www.tesla.com/fsd/safety", label: "Tesla FSD safety report", type: "company" },
+  electrek1MUnsup: { url: "https://electrek.co/2026/09/03/tesla-announces-1-million-unsupervised-miles-driven-by-robotaxi/", label: "Electrek", type: "press" },
+  teslaOracleFleet:{ url: "https://www.teslaoracle.com/2026/09/26/tesla-robotaxi-and-cybercab-fleet-in-texas-surpasses-the-500-mark-420-126/", label: "Tesla Oracle", type: "press" },
+  teslaOracleFsd:  { url: "https://www.teslaoracle.com/2026/09/12/tesla-rolls-out-fsd-v14-3-9-2026-27-6-with-automatic-collision-evasion-feature-details-and-official-release-notes/", label: "Tesla Oracle", type: "press" },
+  electrekHouston: { url: "https://electrek.co/2026/07/20/tesla-robotaxi-remote-operator-crash-houston/", label: "Electrek", type: "press" },
+  electrekCybercabNhtsa: { url: "https://electrek.co/2026/09/15/nhtsa-tesla-cybercab-special-order-fmvss-certification/", label: "Electrek", type: "press" },
+  electrekCybercabProd:  { url: "https://electrek.co/2026/04/23/tesla-cybercab-production-starts-no-nhtsa-2500-vehicle-cap/", label: "Electrek", type: "press" },
+  electrek10B:     { url: "https://electrek.co/2026/05/03/tesla-fsd-10-billion-miles-no-magical-milestone-autonomy/", label: "Electrek", type: "press" },
+  electrekMuskWidespread: { url: "https://electrek.co/2026/05/18/musk-unsupervised-fsd-widespread-us-end-of-year-smart-mobility-summit/", label: "Electrek", type: "press" },
+  cnbcMuskWidespread: { url: "https://www.cnbc.com/2026/01/22/musk-tesla-robotaxis-us-expansion.html", label: "CNBC", type: "press" },
+  cnbcFsdProbe:    { url: "https://www.cnbc.com/2026/03/19/tesla-nhtsa-full-self-driving-fsd-reduced-visibility.html", label: "CNBC", type: "press" },
+  evV14Tracker:    { url: "https://eletric-vehicles.com/tesla/tesla-fsd-v14-data-shows-major-improvement-in-miles-between-interventions/", label: "EV (tracker data)", type: "press" },
+  piperSandler:    { url: "https://finance.yahoo.com/news/tesla-unsupervised-fsd-milestone-very-close-piper-sandler-says-185014902.html", label: "Yahoo Finance", type: "press" },
+  benzingaGlj:     { url: "https://www.benzinga.com/markets/tech/26/03/51137537/teslas-fsd-safety-metrics-sharply-deteriorating-says-analyst", label: "Benzinga", type: "press" },
+
+  // 2026 updates (Sep 2026 research pass) — Waymo
+  waymoSep26:      { url: "https://waymo.com/blog/shorts/safetydata-september26/", label: "Waymo, Sep 2026", type: "company" },
+  electrekWaymo271:{ url: "https://electrek.co/2026/09/24/waymo-says-it-has-stopped-841-injuries-in-271-million-autonomous-miles/", label: "Electrek", type: "press" },
+  tcWaymo14:       { url: "https://techcrunch.com/2026/09/01/waymo-accelerates-robotaxi-expansion-with-launches-in-denver-san-diego-and-tampa/", label: "TechCrunch", type: "press" },
+  cnbcAlphabetQ2:  { url: "https://www.cnbc.com/2026/07/22/google-earnings-q2-goog-live-updates.html", label: "CNBC", type: "press" },
+  sfsFreeway:      { url: "https://sfstandard.com/2026/05/21/waymo-suspends-all-freeway-rides-safety-issues/", label: "SF Standard", type: "press" },
+  nbcdfwDallas:    { url: "https://www.nbcdfw.com/news/local/pedestrian-killed-suv-crash-waymo-dallas/4060058/", label: "NBC DFW", type: "press" },
+  forbesDallas:    { url: "https://www.forbes.com/sites/bradtempleton/2026/08/10/waymo-fatality-likely-not-at-fault-here-are-new-details-and-what-ifs/", label: "Forbes", type: "press" },
+
+  // 2026 updates (Sep 2026 research pass) — others and regulation
+  baiduQ2:         { url: "https://www.prnewswire.com/news-releases/baidu-announces-second-quarter-2026-results-302853860.html", label: "Baidu Q2 2026", type: "company" },
+  ponyQ2:          { url: "https://www.sec.gov/Archives/edgar/data/0001969302/000110465926098113/tm2623382d1_ex99-1.htm", label: "Pony.ai Q2 2026", type: "company" },
+  werideQ2:        { url: "https://ir.weride.ai/news-releases/news-release-details/accelerating-european-expansion-through-proven-asset-light-model", label: "WeRide Q2 2026", type: "company" },
+  auroraQ2:        { url: "https://www.nasdaq.com/press-release/aurora-announces-second-quarter-2026-results-2026-07-29", label: "Aurora Q2 2026", type: "company" },
+  tcZooxExempt:    { url: "https://techcrunch.com/2026/07/30/zoox-clears-final-federal-hurdle-to-launch-paid-robotaxi-service/", label: "TechCrunch", type: "press" },
+  cnbcZooxPaid:    { url: "https://www.cnbc.com/2026/08/05/amazon-zoox-paid-robotaxi-rides-las-vegas.html", label: "CNBC", type: "press" },
+  lucidQ2:         { url: "https://www.sec.gov/Archives/edgar/data/0001811210/000162828026052548/q2fy26ex991earnings.htm", label: "Lucid Q2 2026", type: "company" },
+  uberMotional:    { url: "https://investor.uber.com/news-events/news/press-release-details/2026/Uber-and-Motional-Launch-Robotaxi-Service-in-Las-Vegas/default.aspx", label: "Uber", type: "company" },
+  tcMoiaLA:        { url: "https://techcrunch.com/2026/04/08/volkswagen-moia-uber-los-angeles-testing-self-driving-microbuses-id-buzz/", label: "TechCrunch", type: "press" },
+  fedRegAvFramework: { url: "https://www.federalregister.gov/documents/2026/07/31/2026-15483/av-framework-updates-and-request-for-comments-on-interim-guidance", label: "Federal Register", type: "regulator" },
+  crowellAvStep:   { url: "https://www.crowell.com/en/insights/client-alerts/nhtsa-proposes-updates-to-federal-brake-standards-for-autonomous-vehicles-and-withdraws-av-step-program", label: "Crowell & Moring", type: "press" },
+  foxSelfDrive:    { url: "https://www.foxnews.com/politics/congress-moves-set-national-rules-self-driving-cars-overriding-states", label: "Fox News", type: "press" },
 };
 
 // ============================================================
@@ -97,8 +137,8 @@ export const SOURCES = {
 // ============================================================
 
 export const SITE = {
-  lastUpdated: "Jul 2026", // shown in the header. Update whenever data changes.
-  asOf: "2026-07",         // same date as "YYYY-MM"; charts use it as "today"
+  lastUpdated: "Sep 2026", // shown in the header. Update whenever data changes.
+  asOf: "2026-09",         // same date as "YYYY-MM"; charts use it as "today"
 };
 
 // ============================================================
@@ -118,13 +158,13 @@ export const PAGES = [
     id: "waymo",
     nav: "Waymo",
     title: "Waymo",
-    sub: "220M+ driverless miles. Peer-reviewed safety data.",
+    sub: "271M+ driverless miles across 14 US cities, with the most detailed safety data in the industry.",
   },
   {
     id: "tesla",
     nav: "Tesla FSD",
     title: "Tesla FSD",
-    sub: "Fast version-over-version improvement; a large gap remains to unsupervised.",
+    sub: "Fast version-over-version gains and a driverless robotaxi fleet in six metros, but customer cars still need a driver.",
   },
   {
     id: "others",
@@ -172,15 +212,15 @@ export const EVENT_TYPES = {
 export const SAFETY_POINTS = [
   { id: "tesla-amci",      miles: 13,       label: "Tesla FSD v12.5",  short: "v12.5 (AMCI)",   sublabel: "AMCI independent test",       event: "disengagement",  category: "tesla", source: SOURCES.electrekAmci },
   { id: "tesla-v12-5",     miles: 183,      label: "Tesla FSD v12.5",  short: "v12.5",          sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
-  { id: "tesla-v13",       miles: 493,      label: "Tesla FSD v13",    short: "v13",            sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
+  { id: "tesla-v13",       miles: 443,      label: "Tesla FSD v13.2",  short: "v13.2",          sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.evV14Tracker },
   { id: "tesla-v14",       miles: 1454,     label: "Tesla FSD v14",    short: "v14",            sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
-  { id: "tesla-robotaxi",  miles: 57000,    label: "Tesla Robotaxi",   short: "Robotaxi",       sublabel: "Austin crash rate",           event: "crash",          category: "tesla", source: SOURCES.fortune },
+  { id: "tesla-robotaxi",  miles: 57000,    label: "Tesla Robotaxi",   short: "Robotaxi",       sublabel: "Crash rate with safety monitor, Jul 2025–Jan 2026", event: "crash",          category: "tesla", source: SOURCES.fortune },
   { id: "waymo-testing",   miles: 29000,    label: "Waymo (testing)",  short: "Testing",        sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", source: SOURCES.caDmv },
   { id: "waymo-injury",    miles: 1350000,  label: "Waymo",            short: "Injury",         sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", source: SOURCES.kusano2025 },
-  { id: "waymo-serious",   miles: 50000000, label: "Waymo",            short: "Serious injury", sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", source: SOURCES.waymoSafety },
+  { id: "waymo-serious",   miles: 100000000, label: "Waymo",           short: "Serious injury", sublabel: "Serious-injury crash rate, ~0.01 per million mi (2026)", event: "serious injury", category: "waymo", source: SOURCES.waymoSafety },
   { id: "human-injury",    miles: 252000,   label: "Human drivers",    short: "Injury",         sublabel: "Injury crash rate",           event: "injury crash",   category: "human", source: SOURCES.kusano2025 },
   { id: "human-crash",     miles: 529000,   label: "Human drivers",    short: "All crashes",    sublabel: "All police-reported crashes", event: "crash",          category: "human", source: SOURCES.nhtsa },
-  { id: "human-serious",   miles: 4300000,  label: "Human drivers",    short: "Serious injury", sublabel: "Serious injury crash rate (Waymo benchmark)", event: "serious injury", category: "human", source: SOURCES.waymoSafety },
+  { id: "human-serious",   miles: 4800000,  label: "Human drivers",    short: "Serious injury", sublabel: "Serious-injury crash rate, 0.21 per million mi (Waymo's benchmark)", event: "serious injury", category: "human", source: SOURCES.waymoSafety },
   { id: "human-fatal",     miles: 86000000, label: "Human drivers",    short: "Fatal",          sublabel: "Fatal crash rate",            event: "fatal crash",    category: "human", source: SOURCES.nhtsa },
 ];
 
@@ -203,24 +243,24 @@ export const HUMAN_BENCHMARKS = Object.fromEntries(
 // ============================================================
 
 export const HOME_STATS = [
-  { label: "Waymo best",                   value: "50M mi",   sublabel: "per serious injury crash",       series: "waymo", source: SOURCES.waymoSafety },
+  { label: "Waymo best",                   value: "~100M mi", sublabel: "per serious-injury crash",       series: "waymo", source: SOURCES.waymoSafety },
   { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement",     series: "tesla", source: SOURCES.teslaTracker },
   { label: "Human baseline",               value: "529K mi",  sublabel: "per police-reported crash",      series: "human", source: SOURCES.nhtsa },
   { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "vs. Elluswamy 670K mi target", source: SOURCES.electrekMusk },
 ];
 
 export const WAYMO_STATS = [
-  { label: "Driverless miles",             value: "220M+",  sublabel: "Rider-only, through Mar 2026", source: SOURCES.waymoSafety },
-  { label: "Weekly rides",                 value: "500K",   sublabel: "Target: 1M/week by end of 2026", source: SOURCES.alphabetQ1 },
-  { label: "Safety vs humans",             value: "↓94%",   sublabel: "Fewer serious-injury crashes", source: SOURCES.waymoSafety },
-  { label: "Cities",                       value: "11",     sublabel: "1,400+ sq mi service area", source: SOURCES.electrekWaymo1400 },
+  { label: "Driverless miles",             value: "271M+",  sublabel: "Rider-only, through Jun 2026", source: SOURCES.waymoSep26 },
+  { label: "Weekly rides",                 value: "500K+",  sublabel: "Flat in Q2; target 1M/week by end of 2026", source: SOURCES.cnbcAlphabetQ2 },
+  { label: "Safety vs humans",             value: "↓95%",   sublabel: "Fewer serious-injury crashes", source: SOURCES.waymoSep26 },
+  { label: "Cities",                       value: "14",     sublabel: "4,000+ vehicles; Denver, San Diego, Tampa added Sep 2026", source: SOURCES.tcWaymo14 },
 ];
 
 export const TESLA_STATS = [
-  { label: "FSD v14 best",                 value: "1,454",  sublabel: "Miles / critical disengagement", source: SOURCES.teslaTracker },
-  { label: "Improvement",                  value: "8×",     sublabel: "v12.5 to v14 in 14 months", source: SOURCES.teslaTracker },
-  { label: "Robotaxi fleet (TX)",          value: "~42",    sublabel: "vs. Waymo's 577 — state filings", source: SOURCES.cnbcTexasFleet },
-  { label: "Gap to unsupervised",          value: "~460×",  sublabel: "vs. Elluswamy 670K target", source: SOURCES.electrekMusk },
+  { label: "FSD v14 (crowd)",              value: "1,454",  sublabel: "Miles per critical disengagement", source: SOURCES.teslaTracker },
+  { label: "Unsupervised robotaxi miles",  value: "1M+",    sublabel: "Tesla figure, Sep 3; ~200 cars with no one aboard", source: SOURCES.electrek1MUnsup },
+  { label: "Robotaxis registered (TX)",    value: "546",    sublabel: "420 Model Y + 126 Cybercab, Sep 26", source: SOURCES.teslaOracleFleet },
+  { label: "Gap to unsupervised",          value: "~460×",  sublabel: "FSD v14 vs. Elluswamy 670K target", source: SOURCES.electrekMusk },
 ];
 
 // ============================================================
@@ -235,29 +275,31 @@ export const TESLA_STATS = [
 
 // The line under the table that explains the "*" cells.
 export const CRASH_RATES_FOOTNOTE = {
-  text: "* Waymo: zero fatalities in 220M+ driverless miles. Tesla robotaxi rate from an analysis of NHTSA filings (Feb 2026).",
-  source: SOURCES.fortune,
+  text: "* No fatal crash has been caused by a Waymo in 271M+ driverless miles. In Aug 2026 an empty Waymo in Dallas was involved in a fatal crash after another driver threw a pedestrian into its lane; police found no one at fault. Tesla robotaxi rate covers Jul 2025–Jan 2026, with safety monitors aboard.",
+  source: SOURCES.forbesDallas,
 };
 
 export const CRASH_RATES = [
   { metric: "Police-reported crash", human: "529K", waymo: "~476K",         tesla: "~57K",     waymoGood: false, teslaGood: false, source: SOURCES.nhtsa },
   { metric: "Injury crash",          human: "252K", waymo: "1.35M",         tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.kusano2025 },
-  { metric: "Serious injury crash",  human: "~5M",  waymo: "50M",           tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.waymoSafety },
-  { metric: "Fatal crash",           human: "86M",  waymo: "0 fatalities*", tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.nhtsa },
+  { metric: "Serious injury crash",  human: "~4.8M", waymo: "~100M",       tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.waymoSafety },
+  { metric: "Fatal crash",           human: "86M",  waymo: "0 at fault*",   tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.nhtsa },
 ];
 
 // ============================================================
-// WAYMO_CRASH_REDUCTION — by severity, for the Waymo & Comparison pages.
-// Numbers are incidents per million miles.
+// WAYMO_CRASH_REDUCTION — by severity, for the Waymo page.
+// reduction = % fewer crashes than the human benchmark (drives the bars).
+// waymo / human = incidents per million miles, optional: shown when published.
 // ============================================================
 
 export const WAYMO_CRASH_REDUCTION = [
-  { category: "Serious injury+",         waymo: 0.02, human: 0.23, reduction: 90 },
-  { category: "All injury",              waymo: 0.74, human: 3.97, reduction: 81 },
-  { category: "Airbag deploy",           waymo: 0.26, human: 1.44, reduction: 82 },
-  { category: "Pedestrian injury",       waymo: 0.05, human: 0.59, reduction: 92 },
-  { category: "Cyclist injury",          waymo: 0.03, human: 0.18, reduction: 83 },
-  { category: "Property dmg (Swiss Re)", waymo: 0.36, human: 3.08, reduction: 88 },
+  { category: "Serious injury or worse", reduction: 95, waymo: 0.01, human: 0.21, source: SOURCES.waymoSep26 },
+  { category: "Any injury",              reduction: 82, source: SOURCES.waymoSep26 },
+  { category: "Airbag deployment",       reduction: 82, source: SOURCES.waymoSep26 },
+  { category: "Pedestrian injury",       reduction: 93, source: SOURCES.waymoSep26 },
+  { category: "Cyclist injury",          reduction: 86, source: SOURCES.waymoSep26 },
+  { category: "Motorcyclist injury",     reduction: 82, source: SOURCES.waymoSep26 },
+  { category: "Property damage claims",  reduction: 88, waymo: 0.36, human: 3.08, source: SOURCES.swissRe },
 ];
 
 // ============================================================
@@ -272,7 +314,9 @@ export const WAYMO_MILES_TIMELINE = [
   { date: "2023-12", period: "2023",     miles: 35 },
   { date: "2024-12", period: "2024",     miles: 60 },
   { date: "2025-09", period: "Sep 2025", miles: 127 },
+  { date: "2025-12", period: "Dec 2025", miles: 170 },
   { date: "2026-03", period: "Mar 2026", miles: 221 },
+  { date: "2026-06", period: "Jun 2026", miles: 271 },
 ];
 
 // ============================================================
@@ -283,13 +327,15 @@ export const WAYMO_MILES_TIMELINE = [
 // ============================================================
 
 export const WAYMO_INCIDENTS = [
+  { date: "Aug 2026", text: "Empty Waymo involved in a fatal Dallas crash after an SUV threw a pedestrian into its lane; police found no one at fault", severity: "high", source: SOURCES.nbcdfwDallas },
+  { date: "Jul 2026", text: "Freeway rides return after a fleet-wide pause that began in May over construction-zone errors", severity: "medium", source: SOURCES.sfsFreeway },
   { date: "Jun 2026", text: "Recall of ~4,000 vehicles after 13 instances of entering closed highway work zones", severity: "medium", source: SOURCES.tcWorkZone },
-  { date: "May 2026", text: "Full-fleet recall (3,791 vehicles) after a San Antonio flooded-road incident — OTA fix", severity: "medium", source: SOURCES.electrekFlood },
+  { date: "May 2026", text: "Full-fleet recall (3,791 vehicles) after a San Antonio flooded-road incident, fixed over the air", severity: "medium", source: SOURCES.electrekFlood },
   { date: "Jan 2026", text: "NHTSA probe: robotaxi struck a child near a Santa Monica school",   severity: "high",   source: SOURCES.foxSantaMonica },
   { date: "Dec 2025", text: "SF power outage caused some vehicles to freeze in intersections",   severity: "medium", source: SOURCES.slashdot },
   { date: "Oct 2025", text: "NHTSA investigation into ~20 school bus passing incidents in Austin; 3,067-vehicle recall followed", severity: "high", source: SOURCES.npr },
-  { date: "Ongoing",  text: "Operates only in pre-mapped geofenced areas; no snow capability",    severity: "info",   source: null },
-  { date: "Ongoing",  text: "Remote operators assist with edge cases — not fully independent",    severity: "info",   source: null },
+  { date: "Ongoing",  text: "Operates only in pre-mapped service areas; snow driving is unproven at commercial scale", severity: "info",   source: null },
+  { date: "Ongoing",  text: "Remote operators assist with edge cases, so it is not fully independent", severity: "info",   source: null },
 ];
 
 // ============================================================
@@ -303,8 +349,7 @@ export const TESLA_VERSION_PROGRESS = [
   { version: "v11",   date: "2023-03", milesPerIntervention: 5 },
   { version: "v12.3", date: "2024-04", milesPerIntervention: 80 },
   { version: "v12.5", date: "2024-08", milesPerIntervention: 183 },
-  { version: "v13",   date: "2025-01", milesPerIntervention: 493 },
-  { version: "v13.2", date: "2025-04", milesPerIntervention: 700 },
+  { version: "v13.2", date: "2025-01", milesPerIntervention: 443 },
   { version: "v14",   date: "2025-11", milesPerIntervention: 1454 },
 ];
 
@@ -319,30 +364,30 @@ export const TESLA_TARGET = {
 // ============================================================
 // TESLA_FSD_SUPERVISED / TESLA_ROBOTAXI — side-by-side fact lists.
 //
-// Each row is { label, value, source? }. source is optional — many Robotaxi
-// rows are just facts derived from the same Fortune analysis (linked once at
-// the bottom of the card in the dashboard).
+// Each row is { label, value, source? }. source is optional.
 // ============================================================
 
 export const TESLA_FSD_SUPERVISED = [
-  { label: "Wide release",             value: "v14.2 (59% of fleet)", source: { url: "https://www.notateslaapp.com/fsd-beta/", label: "NotATeslaApp", type: "press" } },
-  { label: "Best crowdsourced rate",   value: "1,454 mi/int",    source: SOURCES.teslaTracker },
-  { label: "Independent test (AMCI)",  value: "13 mi/int",       source: SOURCES.electrekAmci },
-  { label: "Coast-to-coast record",    value: "2,732 mi, 0 int", source: SOURCES.teslarati },
-  { label: "Longest streak",           value: "12,961 mi",       source: SOURCES.notATeslaApp },
-  { label: "NHTSA investigation",      value: "2.88M vehicles",  source: SOURCES.openTools },
-  { label: "Requires",                 value: "Human driver",    source: null },
+  { label: "Latest release",           value: "v14.3.10 (Sep 2026)",   source: SOURCES.teslaOracleFsd },
+  { label: "Older HW3 cars",           value: "v14.2 \"Lite\"",        source: SOURCES.teslaOracleFsd },
+  { label: "Crowdsourced rate (v14)",  value: "1,454 mi/int",          source: SOURCES.teslaTracker },
+  { label: "Independent test (AMCI)",  value: "13 mi/int (v12.5)",     source: SOURCES.electrekAmci },
+  { label: "Tesla-reported, FSD on",   value: "5.7M mi / major crash", source: SOURCES.teslaFsdSafety },
+  { label: "Cumulative FSD miles",     value: "10B+ (May 2026)",       source: SOURCES.electrek10B },
+  { label: "NHTSA probe (visibility)", value: "3.2M vehicles",         source: SOURCES.cnbcFsdProbe },
+  { label: "Requires",                 value: "Human driver",          source: null },
 ];
 
 export const TESLA_ROBOTAXI = [
-  { label: "Launched",             value: "June 2025" },
-  { label: "Unsupervised since",   value: "Jan 2026" },
-  { label: "Cities",               value: "Austin · Dallas · Houston · Miami", source: SOURCES.engadgetMiami },
-  { label: "Austin geofence",      value: "245 sq mi, ~20 cars",  source: SOURCES.techtimesAustin },
-  { label: "Fleet in Texas",       value: "~42 vs Waymo 577",     source: SOURCES.cnbcTexasFleet },
-  { label: "NHTSA incidents",      value: "17 (Jul 25–Mar 26)",   source: SOURCES.electrekUnredact },
-  { label: "Crash rate (Feb 26)",  value: "1 per ~57K mi",        source: SOURCES.fortune },
-  { label: "vs. human avg",        value: "~9x worse",            source: SOURCES.fortune },
+  { label: "Launched",                 value: "Jun 2025 (Austin)" },
+  { label: "Unsupervised in",          value: "6 metros, TX + FL",     source: SOURCES.teslaQ2 },
+  { label: "With safety driver",       value: "SF Bay Area",           source: SOURCES.teslaQ2 },
+  { label: "Cars with no one aboard",  value: "~200 (Sep 2026)",       source: SOURCES.electrek1MUnsup },
+  { label: "Unsupervised miles",       value: "1M+ (Sep 3)",           source: SOURCES.electrek1MUnsup },
+  { label: "Registered in Texas",      value: "546 (126 Cybercabs)",   source: SOURCES.teslaOracleFleet },
+  { label: "NHTSA crash reports",      value: "21+ (to Jul 2026)",     source: SOURCES.electrekHouston },
+  { label: "Crash rate, with monitor", value: "1 per ~57K mi",         source: SOURCES.fortune },
+  { label: "Cybercab",                 value: "Paid rides; NHTSA order", source: SOURCES.electrekCybercabNhtsa },
 ];
 
 // Independent (non-crowdsourced) tests, drawn as hollow markers on the
@@ -370,12 +415,14 @@ export const TESLA_PROJECTION = {
 // ============================================================
 
 export const MUSK_PREDICTIONS = [
-  { said: 2015, due: 2018, done: null, claim: "Full autonomy by 2018",              result: "Not achieved",                     source: SOURCES.electrekMusk },
+  { said: 2015, due: 2018, done: null, claim: "Full autonomy by 2018",              result: "Customer FSD still requires a driver", source: SOURCES.electrekMusk },
   { said: 2016, due: 2017, done: 2025, claim: "LA to NY autonomous by end of 2017", result: "Done Dec 2025 (supervised), 8 years late", source: SOURCES.teslarati },
-  { said: 2019, due: 2020, done: null, claim: "1 million robotaxis by 2020",        result: "~42 in Texas as of May 2026",      source: SOURCES.cnbcTexasFleet },
-  { said: 2022, due: 2024, done: 2026, claim: "Robotaxi production in 2024",        result: "First Cybercab built Feb 2026",    source: SOURCES.techCrunch },
-  { said: 2025, due: 2025, done: null, claim: "Millions of robotaxis in H2 2025",   result: "~42 operating, mid-2026",          source: SOURCES.cnbcTexasFleet },
-  { said: 2019, due: 2020, done: null, claim: "HW3 cars can do unsupervised FSD",   result: "Jan 2025: admitted upgrade needed", source: SOURCES.techCrunch },
+  { said: 2019, due: 2020, done: null, claim: "1 million robotaxis by 2020",        result: "~200 driverless cars, Sep 2026",   source: SOURCES.electrek1MUnsup },
+  { said: 2019, due: 2020, done: null, claim: "HW3 cars can do unsupervised FSD",   result: "Jan 2025: admitted upgrade needed; HW3 now gets a \"Lite\" build", source: SOURCES.techCrunch },
+  { said: 2022, due: 2024, done: 2026, claim: "Robotaxi production in 2024",        result: "Cybercab production began Apr 2026; volume output cut from 2026 plan", source: SOURCES.electrekCybercabProd },
+  { said: 2025, due: 2025, done: null, claim: "Millions of robotaxis in H2 2025",   result: "~200 driverless cars, Sep 2026",   source: SOURCES.electrek1MUnsup },
+  { said: 2025, due: 2025, done: null, claim: "Robotaxi for half the US population by end of 2025", result: "6 metros in 2 states, Sep 2026", source: SOURCES.electrekMuskWidespread },
+  { said: 2026, due: 2026, done: null, claim: "Robotaxis \"widespread\" in the US by end of 2026", result: "Deadline still open",  source: SOURCES.cnbcMuskWidespread },
 ];
 
 // ============================================================
@@ -399,11 +446,12 @@ export const TARGET_THRESHOLDS = [
 // ============================================================
 
 export const REGULATORY_BARRIERS = [
-  { title: "Federal exemption cap", detail: "Max 2,500 non-compliant vehicles/year. No new legislation in a decade.",                        status: "blocked",  source: SOURCES.foley },
-  { title: "FMVSS updates",         detail: "Crashworthiness updated (2022). Transmission, windshield, lighting still in progress.",        status: "partial",  source: SOURCES.fedReg },
-  { title: "AV STEP program",       detail: "Voluntary safety-case framework proposed Jan 2025. No numeric thresholds. Not finalized.",      status: "partial",  source: SOURCES.covington },
-  { title: "SELF DRIVE Act",        detail: "Would raise/eliminate 2,500 cap. Failed for ~10 years. New draft late 2025.",                   status: "blocked",  source: SOURCES.avia },
-  { title: "Zoox exemption",        detail: "First NHTSA exemption for steeringless American AV (Aug 2025). Only 64 demo vehicles.",         status: "achieved", source: SOURCES.nhtsaPressZoox },
+  { title: "Federal exemption cap", detail: "Max 2,500 exempt vehicles per maker per year. Zoox's 2026 exemption hit exactly that cap.", status: "blocked",  source: SOURCES.tcZooxExempt },
+  { title: "FMVSS updates",         detail: "Crashworthiness updated (2022). 2026 proposals cover shifting, defrost, wipers and brakes for cars without manual controls.", status: "partial",  source: SOURCES.fedRegAvFramework },
+  { title: "AV Framework",          detail: "AV STEP was withdrawn in 2026. New interim guidance (Jul 2026) aims to speed up Part 555 exemptions; comments still open.", status: "partial",  source: SOURCES.crowellAvStep },
+  { title: "SELF DRIVE Act",        detail: "Would raise the 2,500 cap. The 2026 bill (H.R. 7390) cleared a House committee by one vote; no floor vote yet.", status: "partial",  source: SOURCES.foxSelfDrive },
+  { title: "Zoox exemption",        detail: "First commercial exemption for a robotaxi with no steering wheel (Jul 30, 2026). Paid rides began Aug 10 in Las Vegas.", status: "achieved", source: SOURCES.tcZooxExempt },
+  { title: "Cybercab certification",detail: "Tesla self-certified its wheel-less Cybercab without an exemption. NHTSA opened an audit Sep 3 and a Special Order Sep 10.", status: "partial",  source: SOURCES.electrekCybercabNhtsa },
   { title: "NHTSA staffing",        detail: "Agency cut ~25% (780 to 575 employees). Reduced rulemaking capacity.",                          status: "blocked",  source: SOURCES.foley },
 ];
 
@@ -417,8 +465,8 @@ export const REGULATORY_BARRIERS = [
 // ============================================================
 
 export const EXPERT_TIMELINES = [
-  { year: "Now",        event: "L4 robotaxis in select cities (Waymo)",          status: "Happening",          tone: "good", source: SOURCES.axios },
-  { year: "~2028",      event: "L4 robotaxis in 20+ cities globally",            status: "Ahead of schedule — ~40 cities live (US + China)", tone: "good", source: SOURCES.baiduIr },
+  { year: "Now",        event: "L4 robotaxis in select cities (Waymo, Apollo Go, Zoox, Tesla)", status: "Happening", tone: "good", source: SOURCES.tcWaymo14 },
+  { year: "~2028",      event: "L4 robotaxis in 20+ cities globally",            status: "Already passed: Apollo Go runs in 28 cities, Waymo in 14", tone: "good", source: SOURCES.baiduQ2 },
   { year: "~2030",      event: "Large-scale L4 robotaxi rollout",                status: "Consensus",             tone: "neutral", source: SOURCES.mckinsey },
   { year: "~2032",      event: "L4 in privately owned vehicles (limited)",       status: "Optimistic",            tone: "caution", source: SOURCES.mckinsey },
   { year: "~2035",      event: "<6% of new vehicles sold have L4",               status: "Forecast",              tone: "caution", source: SOURCES.mckinsey },
@@ -437,7 +485,8 @@ export const CHILD_SAFETY = {
   parentsComfortableDriving: "63%",
   parentsLetChildRideAlone: "21%",
   impliedCrashThreshold: "roughly 1 crash per 10M+ miles",
-  waymoSeriousInjuryRate: "about one event per 50 million miles",
+  waymoSeriousInjuryRate: "about one per 100 million miles",
+  waymoCrashRate: "about one per 476K miles",
   source: SOURCES.chop,
 };
 
@@ -451,33 +500,33 @@ export const CHILD_SAFETY = {
 // ============================================================
 
 export const OTHERS_STATS = [
-  { label: "Apollo Go rides",      value: "22M+",   sublabel: "Cumulative, 27 cities worldwide", source: SOURCES.baiduIr },
-  { label: "Pony.ai fleet",        value: "1,700+", sublabel: "Targeting 3,500+ by end of 2026", source: SOURCES.ponyIr },
-  { label: "Aurora truck miles",   value: "250K+",  sublabel: "Driverless, zero at-fault collisions", source: SOURCES.auroraIr },
-  { label: "Zoox cities",          value: "2",      sublabel: "Las Vegas & SF; Miami, Austin next", source: SOURCES.electrekZoox },
+  { label: "Apollo Go rides",      value: "23M+",   sublabel: "Cumulative, 28 cities (Jun 2026)",      source: SOURCES.baiduQ2 },
+  { label: "Pony.ai fleet",        value: "1,975",  sublabel: "Q2 2026; 3,500+ targeted by year-end",  source: SOURCES.ponyQ2 },
+  { label: "WeRide robotaxis",     value: "1,800+", sublabel: "Of ~3,400 L4 vehicles in 13 countries", source: SOURCES.werideQ2 },
+  { label: "Aurora truck miles",   value: "440K",   sublabel: "Driverless, zero Aurora-caused collisions", source: SOURCES.auroraQ2 },
 ];
 
 export const OTHER_PLAYERS = [
-  { company: "Apollo Go (Baidu)", status: "driverless", scale: "22M+ rides",
-    detail: "27 cities; 300K+ rides/week peak. Driverless in Dubai, Abu Dhabi, Seoul.", source: SOURCES.cnevApollo },
-  { company: "Zoox (Amazon)",     status: "driverless", scale: "2 cities",
-    detail: "Public rides in Las Vegas and SF; Miami and Austin announced; Uber app integration.", source: SOURCES.electrekZoox },
-  { company: "Pony.ai",           status: "driverless", scale: "1,700+ fleet",
-    detail: "China robotaxis; targeting 3,500+ vehicles in 20+ cities by end of 2026.", source: SOURCES.ponyIr },
-  { company: "WeRide",            status: "driverless", scale: "~1,000 fleet",
-    detail: "China + UAE; dual-listed Nasdaq and HKEX.", source: SOURCES.caixinWeRide },
-  { company: "Aurora",            status: "driverless", scale: "250K+ mi",
-    detail: "Driverless Class-8 trucking on Texas routes; 200+ trucks targeted by end of 2026.", source: SOURCES.auroraIr },
-  { company: "Nuro",              status: "testing",    scale: "CA permit",
-    detail: "Driverless testing permit May 2026; Uber robotaxi service in SF Bay planned.", source: SOURCES.tcNuro },
-  { company: "Wayve",             status: "testing",    scale: "Tokyo 2026",
-    detail: "Robotaxi pilot with Uber and Nissan; 10+ cities planned.", source: SOURCES.tcWayve },
-  { company: "Mobileye / VW",     status: "testing",    scale: "LA 2026",
-    detail: "ID.Buzz robotaxis with Uber; driverless targeted 2027.", source: SOURCES.insideEvsMoia },
+  { company: "Apollo Go (Baidu)", status: "driverless", scale: "23M+ rides",
+    detail: "28 cities; 240M+ fully driverless km. Commercial service in Dubai (also on Uber); testing in Hong Kong, London and Switzerland.", source: SOURCES.baiduQ2 },
+  { company: "Zoox (Amazon)",     status: "driverless", scale: "Paid in Las Vegas",
+    detail: "First federal exemption for a robotaxi with no steering wheel. Paid rides since Aug 10; free rides in SF; Austin and Miami planned.", source: SOURCES.cnbcZooxPaid },
+  { company: "Pony.ai",           status: "driverless", scale: "1,975 fleet",
+    detail: "China robotaxis; 3,500+ targeted by end of 2026; Uber deal for 2,000+ cars in Europe.", source: SOURCES.ponyQ2 },
+  { company: "WeRide",            status: "driverless", scale: "1,800+ robotaxis",
+    detail: "China, the Middle East and Europe; ~3,400 L4 vehicles across 13 countries.", source: SOURCES.werideQ2 },
+  { company: "Aurora",            status: "driverless", scale: "440K mi",
+    detail: "Driverless Class-8 trucks in Texas; second-gen hardware launched; 200 trucks targeted by end of 2026.", source: SOURCES.auroraQ2 },
+  { company: "Motional",          status: "supervised", scale: "Las Vegas (Uber)",
+    detail: "IONIQ 5 robotaxis on Uber with an operator aboard; driverless targeted by end of 2026.", source: SOURCES.uberMotional },
   { company: "May Mobility",      status: "supervised", scale: "2 metros",
     detail: "Atlanta (Lyft) and Arlington TX (Uber), safety operators onboard.", source: SOURCES.tcMayMobility },
-  { company: "Motional",          status: "testing",    scale: "Vegas EOY",
-    detail: "AI-first reboot; driverless Las Vegas service by end of 2026.", source: SOURCES.tcMotional },
+  { company: "Nuro (Lucid, Uber)",status: "testing",    scale: "Bay Area + Houston",
+    detail: "Lucid Gravity robotaxis testing with a CA driverless permit; Uber launch planned for late 2026.", source: SOURCES.lucidQ2 },
+  { company: "Wayve",             status: "testing",    scale: "Tokyo, late 2026",
+    detail: "Uber pilot with Nissan, safety driver at first; 10+ cities planned including London.", source: SOURCES.tcWayve },
+  { company: "VW MOIA / Mobileye",status: "testing",    scale: "LA, late 2026",
+    detail: "ID. Buzz robotaxis testing in LA with safety drivers; Uber launch by late 2026.", source: SOURCES.tcMoiaLA },
   { company: "Cruise (GM)",       status: "dead",       scale: "—",
     detail: "Shut down Dec 2024 after $10B+ in losses.", source: SOURCES.scdCruise },
 ];
@@ -487,6 +536,6 @@ export const OTHER_PLAYERS = [
 // ============================================================
 
 export const FOOTER_SOURCES = [
-  "NHTSA", "CA DMV", "Waymo Safety Impact", "Swiss Re", "Kusano et al. 2025",
-  "teslafsdtracker.com", "AMCI Testing", "Fortune", "Electrek", "Baidu IR", "Aurora", "McKinsey",
+  "NHTSA", "CA DMV", "Waymo Safety Impact", "Swiss Re", "Kusano et al. 2025", "Tesla",
+  "teslafsdtracker.com", "AMCI Testing", "Electrek", "TechCrunch", "CNBC", "Baidu IR", "Aurora", "McKinsey",
 ];

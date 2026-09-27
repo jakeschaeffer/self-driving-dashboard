@@ -112,8 +112,8 @@ export default function Steeringless() {
           <p className={s.childText}>
             The implied bar, {CHILD_SAFETY.impliedCrashThreshold}, also needs things that don't exist yet: remote
             monitoring, secure interiors, emergency communication, verified pickup and drop-off, and medical
-            response. Waymo's serious-injury rate, {CHILD_SAFETY.waymoSeriousInjuryRate}, is close to the crash
-            bar. The rest is unbuilt.
+            response. Waymo already clears that bar for serious-injury crashes ({CHILD_SAFETY.waymoSeriousInjuryRate})
+            but not for crashes of any kind ({CHILD_SAFETY.waymoCrashRate}). The rest is unbuilt.
           </p>
         </div>
       </Section>

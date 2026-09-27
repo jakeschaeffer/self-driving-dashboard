@@ -43,10 +43,12 @@ export default function Tesla() {
             </table>
           </div>
         </details>
-        <Note title="Crowdsourced data skews optimistic">
+        <Note title="Crowdsourced data skews optimistic and swings">
           Most miles come from enthusiasts driving in favorable conditions (<SourceTag source={SOURCES.teslaTracker} />).
-          Independent testing on standardized routes found just 13 miles between interventions on v12.5
-          (<SourceTag source={SOURCES.electrekAmci} />).
+          Single releases swing widely: v14.1 briefly topped 9,000 miles (<SourceTag source={SOURCES.piperSandler} />),
+          then v14.2 fell back, with city miles dropping from 4,109 to 809 (<SourceTag source={SOURCES.benzingaGlj} />).
+          No stable average for v14.3 has been published. Independent testing found just 13 miles between
+          interventions on v12.5 (<SourceTag source={SOURCES.electrekAmci} />).
         </Note>
       </Section>
 
@@ -60,6 +62,10 @@ export default function Tesla() {
           <FactSheet title="Robotaxi (no driver)" rows={TESLA_ROBOTAXI} />
         </div>
         <Note>
+          The ~57K-mile crash rate covers the period with a safety monitor aboard; Tesla has not published
+          crash counts for its unsupervised miles. Remote operators have caused at least three robotaxi crashes
+          (<SourceTag source={SOURCES.electrekHouston} />). Tesla's own FSD figure counts "major" collisions
+          only, a narrower bar than police-reported crashes (<SourceTag source={SOURCES.teslaFsdSafety} />).
           Tesla fully redacted robotaxi crash details from NHTSA filings until May 2026; narratives are now
           public (<SourceTag source={SOURCES.electrekUnredact} />). Tesla's quarterly Vehicle Safety Reports
           count only high-severity events, mostly on highways (<SourceTag source={SOURCES.teslaSafety} />). The
