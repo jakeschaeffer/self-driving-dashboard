@@ -1,0 +1,337 @@
+/* ==========================================================================
+   The road. Desktop: lanes run left → right. Phones (< 700px): the road
+   turns vertical and runs bottom → top, with mile markers up the left side.
+   Every position comes from --pos (0–100), set inline by RoadChart.jsx.
+   ========================================================================== */
+
+.figure { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+
+.road {
+  /* On the asphalt, remap the page's ink tokens to road paint. Anything nested
+     here (like SourceTag) then reads light-on-dark in both themes. */
+  --ink: var(--paint);
+  --ink-2: var(--paint-2);
+  --ink-3: var(--paint-2);
+  --bg: var(--asphalt);
+  --rule-strong: rgba(231, 233, 228, 0.35);
+  --edge: rgba(231, 233, 228, 0.7);
+
+  --name-w: 136px;   /* lane-name column */
+  --lane-h: 96px;
+  --gantry-h: 28px;  /* strip above the lanes that holds the human-line tag */
+
+  background: var(--asphalt);
+  color: var(--paint);
+  border: 1px solid var(--asphalt-edge);
+  border-radius: 10px;
+  padding: 16px 32px 18px 0;
+  box-shadow: var(--shadow);
+}
+
+.key { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; }
+.key[data-lane="tesla"] { background: var(--tesla-road); }
+.key[data-lane="waymo"] { background: var(--waymo-road); }
+.key[data-lane="human"] { background: var(--human-road); }
+
+/* ---- Readout: the instrument-panel strip that shows the hovered marker ---- */
+.readout {
+  margin: 0 0 6px 20px;
+  min-height: 78px;
+  padding: 10px 14px;
+  border: 1px solid var(--paint-3);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.hint { font-size: 15px; font-weight: 600; }
+.hintSub { font-family: var(--font-mono); font-size: 12px; color: var(--paint-2); }
+.rTitle { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+.rSub { font-weight: 400; color: var(--paint-2); }
+.rValue { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.1; }
+.rPer { font-family: var(--font-body); font-weight: 400; font-size: 15px; color: var(--paint-2); }
+.rFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 13px; }
+.rCmp { font-family: var(--font-mono); font-size: 12px; color: var(--paint-2); }
+.rCmp[data-dir="1"] { color: #6fd39a; }
+.rCmp[data-dir="-1"] { color: #f4a37a; }
+
+/* ---- Lanes ---- */
+.lanes { position: relative; isolation: isolate; padding-top: var(--gantry-h); }
+
+.carriageway {
+  border-top: 2px solid var(--edge);     /* road edge lines */
+  border-bottom: 2px solid var(--edge);
+}
+
+.lane {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--name-w) 1fr;
+  height: var(--lane-h);
+}
+/* Dashed lane markings between lanes */
+.lane + .lane {
+  background: repeating-linear-gradient(90deg, var(--paint-2) 0 26px, transparent 26px 50px) top left / 100% 2px no-repeat;
+}
+
+.lane[data-lane="tesla"] { --c: var(--tesla-road); }
+.lane[data-lane="waymo"] { --c: var(--waymo-road); }
+.lane[data-lane="human"] { --c: var(--human-road); }
+
+.laneName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 20px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--paint);
+}
+
+.track { position: relative; }
+
+/* ---- Data points ---- */
+.point {
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--pos) * 1%);
+  top: 50%;
+}
+/* Markers pop in where they belong. Only scale animates, never position, so
+   any frame — including a thumbnail caught mid-animation — reads correctly. */
+.marker { animation: pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) calc(var(--i) * 70ms + 150ms) backwards; }
+@keyframes pop { from { transform: scale(0.35); } }
+
+.marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 2.5px var(--asphalt);  /* surface ring keeps it crisp over lines */
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.marker::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; } /* 34px hit area */
+.marker[data-hollow] {
+  background: var(--asphalt);
+  box-shadow: inset 0 0 0 3px var(--c), 0 0 0 2.5px var(--asphalt);
+}
+.marker:hover, .point[data-active] .marker { transform: scale(1.25); }
+.point[data-active] .marker { outline: 2px solid var(--paint); outline-offset: 3px; }
+
+.label {
+  position: absolute;
+  left: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 1.2;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--asphalt);  /* masks the joints and human line behind the text */
+  pointer-events: none;
+}
+.point[data-side="above"] .label { bottom: 13px; }
+.point[data-side="below"] .label { top: 13px; }
+.point[data-edge="start"] .label { transform: translateX(-12px); align-items: flex-start; }
+.point[data-edge="end"] .label { transform: translateX(calc(-100% + 12px)); align-items: flex-end; }
+
+.short { font-weight: 600; font-size: 13.5px; color: var(--paint); }
+.miles { font-family: var(--font-mono); font-size: 11.5px; color: var(--paint-2); }
+
+/* ---- Overlay: expansion joints at each 10× step, and the human line ---- */
+.overlay {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: var(--name-w);
+  right: 0;
+  pointer-events: none;
+}
+.joint {
+  position: absolute;
+  top: var(--gantry-h);
+  bottom: 0;
+  left: calc(var(--pos) * 1%);
+  width: 1px;
+  background: rgba(231, 233, 228, 0.09);
+}
+.humanLine {
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: calc(var(--pos) * 1%);
+  border-left: 2px dashed rgba(231, 233, 228, 0.6);
+}
+.humanTag {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  transform: translateX(-50%);
+  padding: 2px 7px 1px;
+  border-radius: 3px;
+  background: var(--paint);
+  color: var(--asphalt);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---- Axis: green mile-marker signs on the roadside ---- */
+.axis {
+  position: relative;
+  height: 38px;
+  margin-top: 12px;
+  margin-left: var(--name-w);
+}
+.axisTitle {
+  position: absolute;
+  top: 8px;
+  right: 100%;
+  width: var(--name-w);
+  padding-left: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paint-2);
+}
+.post {
+  position: absolute;
+  top: 0;
+  left: calc(var(--pos) * 1%);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 34px;
+  padding: 4px 6px 4px;
+  border-radius: 3px;
+  background: var(--sign);
+  color: var(--sign-ink);
+  box-shadow: inset 0 0 0 1.5px var(--sign), inset 0 0 0 2.5px var(--sign-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+.post::before {
+  content: "MI";
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+  margin-bottom: 3px;
+  opacity: 0.85;
+}
+
+/* ---- Legend (below the road, in page colors) ---- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.lgItem { display: inline-flex; align-items: center; gap: 8px; }
+.lgFilled, .lgHollow { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.lgFilled { background: var(--ink-2); }
+.lgHollow { box-shadow: inset 0 0 0 2.5px var(--ink-2); }
+.lgLine { width: 0; height: 14px; border-left: 2px dashed var(--ink-2); }
+
+/* ---- Tablet: slimmer lane names ---- */
+@media (max-width: 900px) {
+  .road { --name-w: 112px; padding-right: 24px; }
+  .laneName { font-size: 10.5px; padding-left: 16px; }
+  .readout { margin-left: 16px; }
+}
+
+/* ==========================================================================
+   Phones: the road turns vertical. Lanes become columns, farther = higher.
+   ========================================================================== */
+@media (max-width: 699px) {
+  .road {
+    --road-h: 820px;  /* full height of the lanes, including name row */
+    --name-h: 40px;
+    --axis-w: 48px;
+    padding: 12px 10px 14px 6px;
+  }
+  .readout { margin: 0 0 12px 4px; min-height: 96px; }
+  .rValue { font-size: 22px; }
+
+  .body { display: grid; grid-template-columns: var(--axis-w) 1fr; }
+  .axis { order: -1; margin: var(--name-h) 0 0; height: calc(var(--road-h) - var(--name-h)); }
+  .axisTitle { display: none; }
+  .post { top: auto; left: 50%; bottom: calc(var(--pos) * 1%); transform: translate(-50%, 50%); min-width: 38px; }
+
+  .lanes { padding-top: 0; }
+  .carriageway {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    height: var(--road-h);
+    border: none;
+    border-left: 2px solid var(--edge);
+    border-right: 2px solid var(--edge);
+  }
+  .lane { height: auto; grid-template-columns: none; grid-template-rows: var(--name-h) 1fr; }
+  .lane + .lane {
+    background: repeating-linear-gradient(180deg, var(--paint-2) 0 26px, transparent 26px 50px) top left / 2px 100% no-repeat;
+  }
+  .laneName {
+    padding: 0 4px;
+    justify-content: center;
+    text-align: center;
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    line-height: 1.15;
+    border-bottom: 1px solid var(--paint-3);
+  }
+
+  /* Each point spans its lane's width so the label can wrap inside the lane. */
+  .point {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: calc(var(--pos) * 1%);
+  }
+  .marker { left: 14%; width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+  .point[data-side] .label,
+  .point[data-edge] .label {
+    left: calc(14% + 9px);
+    right: 0;
+    top: 0;
+    bottom: auto;
+    transform: translateY(-50%);
+    align-items: flex-start;
+    white-space: normal;
+  }
+  .short { font-size: 12px; line-height: 1.1; }
+  .miles { font-size: 10.5px; }
+
+  .overlay { top: var(--name-h); left: 0; }
+  .joint { top: auto; left: 0; right: 0; bottom: calc(var(--pos) * 1%); width: auto; height: 1px; }
+  .humanLine {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--pos) * 1%);
+    border-left: none;
+    border-top: 2px dashed rgba(231, 233, 228, 0.6);
+  }
+  .humanTag { top: auto; bottom: 4px; left: 4px; transform: none; font-size: 9px; }
+}

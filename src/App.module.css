@@ -1,0 +1,24 @@
+/* The side gutter is set once here, so nothing on the page can touch the
+   screen edge or cause sideways scrolling. */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+  padding-block: 40px 72px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+@media (max-width: 600px) {
+  .app { --gutter: 16px; }
+  .main { padding-block: 28px 56px; gap: 44px; }
+}

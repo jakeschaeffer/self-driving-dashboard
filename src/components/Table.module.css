@@ -1,0 +1,104 @@
+/* Shared table styles: import this module wherever a page shows a data table. */
+
+.scroll {
+  overflow-x: auto;           /* wide tables scroll inside themselves, never the page */
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--rule-strong);
+  white-space: nowrap;
+}
+.table td {
+  padding: 12px 16px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+.table tr:last-child td { border-bottom: none; }
+
+.num { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.num { font-family: var(--font-mono); color: var(--ink); }
+
+.system { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); }
+.subtle { display: block; font-size: 12.5px; color: var(--ink-3); font-family: var(--font-body); }
+.metric { font-weight: 600; color: var(--ink) !important; }
+
+.key { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.key[data-series="tesla"] { background: var(--tesla); }
+.key[data-series="waymo"] { background: var(--waymo); }
+.key[data-series="human"] { background: var(--human); }
+
+/* ▲ better / ▼ worse — the arrow carries the meaning, color reinforces it. */
+.delta[data-dir="1"] { color: var(--good); }
+.delta[data-dir="-1"] { color: var(--bad); }
+.delta .subtle { font-family: var(--font-body); }
+
+.big { font-size: 16px; font-weight: 600; }
+.unit { font-size: 12px; color: var(--ink-3); }
+
+.table[data-matrix] td { vertical-align: middle; padding-block: 15px; }
+
+.footnote { font-size: 13.5px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+
+/* Phones: a [data-stack] table turns each row into a small block, with the
+   column name shown above each value (from the cell's data-label). */
+@media (max-width: 600px) {
+  .scroll[data-stack] .table { min-width: 0; }
+  .scroll[data-stack] thead { display: none; }
+  .scroll[data-stack] tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 8px;
+    padding: 14px 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .scroll[data-stack] tr:last-child { border-bottom: none; }
+  .scroll[data-stack] td { padding: 0; border: none; }
+  .scroll[data-stack] td:first-child,
+  .scroll[data-stack] td:last-child { grid-column: 1 / -1; text-align: left; }
+  .scroll[data-stack] td.num { text-align: left !important; white-space: normal; }
+  .scroll[data-stack] td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .scroll[data-stack] .big { font-size: 15px; }
+}
+
+/* Collapsible data table under the road chart */
+.details { display: flex; flex-direction: column; }
+.summary {
+  cursor: pointer;
+  width: fit-content;
+  padding: 6px 0;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 4px;
+}
+.summary:hover { color: var(--ink); }
+.details[open] .summary { margin-bottom: 10px; }

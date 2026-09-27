@@ -1,0 +1,124 @@
+/* ==========================================================================
+   Design tokens — every color, font and size the site uses, defined once.
+
+   Components never write a raw color; they use these names, e.g.
+   `color: var(--ink-2)`. That is what makes light/dark theming work: the
+   dark theme below redefines the same names, and every component follows.
+
+   Theme rules:
+   - Bare :root is the light ("day") palette.
+   - The @media block applies the dark ("night") palette when the OS is in
+     dark mode, unless the page is explicitly set to light.
+   - [data-theme="dark"] applies it when the reader picks dark with the
+     toggle. KEEP THE TWO DARK BLOCKS IDENTICAL.
+   ========================================================================== */
+
+:root {
+  /* Type — Barlow is modelled on California highway signage; Overpass Mono
+     descends from Highway Gothic, the US road-sign face. */
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Overpass Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Page */
+  --bg: #eef0ec;          /* concrete */
+  --surface: #f9faf8;     /* raised panels */
+  --surface-2: #e3e7e2;   /* subtle fills, table stripes */
+  --ink: #15191c;         /* primary text */
+  --ink-2: #434b51;       /* secondary text */
+  --ink-3: #5f676d;       /* labels, captions */
+  --rule: #d3d8d3;        /* hairlines */
+  --rule-strong: #aeb5af;
+
+  /* Highway vocabulary */
+  --sign: #0b6b47;        /* guide-sign green: brand, active nav, mile markers */
+  --sign-ink: #ffffff;
+  --caution: #f2b632;     /* caution-sign yellow: caveat notes only */
+  --caution-ink: #1d1600;
+
+  /* The road is asphalt in both themes */
+  --asphalt: #20262a;
+  --asphalt-edge: #171b1e;
+  --paint: #e7e9e4;       /* lane markings, labels on the road */
+  --paint-2: #a9b2b7;
+  --paint-3: rgba(231, 233, 228, 0.16);
+
+  /* Data series (validated for color-blind separation) */
+  --tesla: #eb6834;
+  --waymo: #2a78d6;
+  --human: #6b7379;
+  --tesla-road: #d95926;  /* same hues, stepped for the dark road */
+  --waymo-road: #3987e5;
+  --human-road: #c3c9cd;
+
+  /* Status — only where a color means good/bad; always paired with a glyph */
+  --good: #12733a;
+  --bad: #b3372f;
+  --warn: #8a5a00;
+  --good-bg: rgba(18, 115, 58, 0.10);
+  --bad-bg: rgba(179, 55, 47, 0.10);
+  --warn-bg: rgba(242, 182, 50, 0.20);
+  --neutral-bg: rgba(67, 75, 81, 0.10);
+
+  /* Layout */
+  --maxw: 1120px;
+  --gutter: 20px;
+  --radius: 6px;
+  --shadow: 0 1px 0 rgba(21, 25, 28, 0.04), 0 8px 24px -12px rgba(21, 25, 28, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0d1012;
+    --surface: #151a1d;
+    --surface-2: #1d2327;
+    --ink: #eef1f2;
+    --ink-2: #b6bec3;
+    --ink-3: #8c959b;
+    --rule: #262d31;
+    --rule-strong: #3a4247;
+    --sign: #16875b;
+    --caution: #f2b632;
+    --asphalt: #1e2428;
+    --asphalt-edge: #2c3338;
+    --tesla: #d95926;
+    --waymo: #3987e5;
+    --human: #9aa3a9;
+    --good: #3fbf6f;
+    --bad: #f0706a;
+    --warn: #f2b632;
+    --good-bg: rgba(63, 191, 111, 0.12);
+    --bad-bg: rgba(240, 112, 106, 0.12);
+    --warn-bg: rgba(242, 182, 50, 0.14);
+    --neutral-bg: rgba(182, 190, 195, 0.10);
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1012;
+  --surface: #151a1d;
+  --surface-2: #1d2327;
+  --ink: #eef1f2;
+  --ink-2: #b6bec3;
+  --ink-3: #8c959b;
+  --rule: #262d31;
+  --rule-strong: #3a4247;
+  --sign: #16875b;
+  --caution: #f2b632;
+  --asphalt: #1e2428;
+  --asphalt-edge: #2c3338;
+  --tesla: #d95926;
+  --waymo: #3987e5;
+  --human: #9aa3a9;
+  --good: #3fbf6f;
+  --bad: #f0706a;
+  --warn: #f2b632;
+  --good-bg: rgba(63, 191, 111, 0.12);
+  --bad-bg: rgba(240, 112, 106, 0.12);
+  --warn-bg: rgba(242, 182, 50, 0.14);
+  --neutral-bg: rgba(182, 190, 195, 0.10);
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+}

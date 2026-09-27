@@ -1,0 +1,54 @@
+.figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+
+.row {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 110px 120px;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.cat { font-weight: 600; font-size: 15px; }
+
+.bars { display: flex; flex-direction: column; gap: 3px; }
+.human, .waymo { height: 10px; border-radius: 0 4px 4px 0; }
+.human { width: 100%; background: var(--human); opacity: 0.45; }
+.waymo { width: calc(var(--w) * 1%); min-width: 3px; background: var(--waymo); }
+
+.pct {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--good);
+  white-space: nowrap;
+}
+.rates {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.vs { color: var(--ink-3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: var(--ink-2); }
+.lgItem { display: inline-flex; align-items: center; gap: 8px; }
+.lgHuman, .lgWaymo { width: 18px; height: 10px; border-radius: 0 3px 3px 0; }
+.lgHuman { background: var(--human); opacity: 0.45; }
+.lgWaymo { background: var(--waymo); }
+
+@media (max-width: 700px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "cat pct" "bars bars" "rates rates";
+    gap: 8px 12px;
+  }
+  .cat { grid-area: cat; }
+  .pct { grid-area: pct; font-size: 20px; }
+  .bars { grid-area: bars; }
+  .rates { grid-area: rates; text-align: left; }
+}

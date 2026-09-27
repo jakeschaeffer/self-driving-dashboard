@@ -18,8 +18,8 @@
 //
 // Each source is { url: string, label: string, type: "regulator" | "academic"
 // | "company" | "crowdsource" | "press" }.
-// `type` is hint metadata only — the UI doesn't currently render it, but
-// /qa scripts and source-quality audits use it.
+// `type` is rendered as a small tag next to every source link (see
+// src/components/SourceTag.jsx), so readers can see how much to trust it.
 // ============================================================
 
 export const SOURCES = {
@@ -98,6 +98,7 @@ export const SOURCES = {
 
 export const SITE = {
   lastUpdated: "Jul 2026", // shown in the header. Update whenever data changes.
+  asOf: "2026-07",         // same date as "YYYY-MM"; charts use it as "today"
 };
 
 // ============================================================
@@ -109,6 +110,7 @@ export const PAGES = [
   {
     id: "home",
     nav: "Overview",
+    eyebrow: "Self-driving safety, by the numbers",
     title: "How close are self-driving cars to human-level safety?",
     sub: "Tesla, Waymo, and human drivers by miles between safety events. Log scale — each step right is 10× safer.",
   },
@@ -139,63 +141,54 @@ export const PAGES = [
 ];
 
 // ============================================================
-// COLORS — harmonized palette for the three families on the
-// hero/ladder. Each row in NINES_SCALE_DATA picks a shade by
-// (category, intensity).
-// ============================================================
-
-export const CAT_COLORS = {
-  tesla: [
-    "oklch(0.62 0.17 40)",   // intensity 0 — v12.5 AMCI
-    "oklch(0.68 0.16 50)",   // 1 — v12.5 crowd
-    "oklch(0.74 0.15 60)",   // 2 — v13
-    "oklch(0.80 0.14 75)",   // 3 — v14
-    "oklch(0.72 0.16 55)",   // 4 — Robotaxi
-  ],
-  waymo: [
-    "oklch(0.70 0.14 240)",  // 0 — testing
-    "oklch(0.64 0.16 245)",  // 1 — injury
-    "oklch(0.56 0.17 250)",  // 2 — serious injury
-  ],
-  human: [
-    "oklch(0.70 0.02 260)",  // 0 — avg
-    "oklch(0.55 0.02 260)",  // 1 — fatal
-  ],
-};
-
-// ============================================================
-// NINES_SCALE_DATA — the hero ladder. Every row is one safety
-// data point plotted on a log scale of miles between events.
+// SAFETY_POINTS — the hero "road" on the Overview page. Every row is
+// one safety data point, plotted on a log scale of miles between events.
+// Each category gets its own lane; colors come from the CSS theme
+// (src/styles/tokens.css), so there is nothing color-related to set here.
 //
 // Shape per row:
-//   nines       — log10(miles), e.g. miles=1454 → nines≈3.16
-//   miles       — miles between events (the canonical number)
-//   label       — system name shown in the row (e.g. "Tesla FSD v14")
-//   sublabel    — short context line (e.g. "Crowdsourced average")
-//   event       — what one tick means: "disengagement" | "crash" |
-//                 "injury crash" | "serious injury" | "fatal crash"
-//   category    — "tesla" | "waymo" | "human" — picks color family
-//   intensity   — index into CAT_COLORS[category]
-//   isBaseline  — optional; true for Human Average / Human Fatal
-//   source      — SOURCES.x reference or inline { url, label }
+//   id       — unique, stable key (React uses it to track rows)
+//   miles    — miles between events (the only number the chart needs)
+//   label    — full name, used in tooltips and the data table
+//   short    — compact name drawn next to the marker on the road
+//   sublabel — short context line (e.g. "Crowdsourced average")
+//   event    — what one event means. Must be a key of EVENT_TYPES below.
+//   category — "tesla" | "waymo" | "human" — picks the lane
+//   source   — SOURCES.x reference or inline { url, label, type }
 // ============================================================
 
-export const NINES_SCALE_DATA = [
-  { nines: 1.1, miles: 13,         label: "Tesla FSD v12.5", sublabel: "AMCI independent test",       event: "disengagement",  category: "tesla", intensity: 0, source: SOURCES.electrekAmci },
-  { nines: 2.3, miles: 183,        label: "Tesla FSD v12.5", sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 1, source: SOURCES.teslaTracker },
-  { nines: 2.7, miles: 493,        label: "Tesla FSD v13",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 2, source: SOURCES.teslaTracker },
-  { nines: 3.2, miles: 1454,       label: "Tesla FSD v14",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 3, source: SOURCES.teslaTracker },
-  { nines: 4.5, miles: 29000,      label: "Waymo (testing)", sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", intensity: 0, source: SOURCES.caDmv },
-  { nines: 4.8, miles: 57000,      label: "Tesla Robotaxi",  sublabel: "Austin crash rate",           event: "crash",          category: "tesla", intensity: 4, source: SOURCES.fortune },
-  { nines: 5.7, miles: 529000,     label: "Human Average",   sublabel: "All police-reported crashes", event: "crash",          category: "human", intensity: 0, isBaseline: true, source: SOURCES.nhtsa },
-  { nines: 6.1, miles: 1350000,    label: "Waymo",           sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", intensity: 1, source: SOURCES.kusano2025 },
-  { nines: 7.7, miles: 50000000,   label: "Waymo",           sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", intensity: 2, source: SOURCES.waymoSafety },
-  { nines: 7.9, miles: 86000000,   label: "Human Fatal",     sublabel: "Fatal crash rate only",       event: "fatal crash",    category: "human", intensity: 1, isBaseline: true, source: SOURCES.nhtsa },
+// The kinds of events a row can count. `human` names the matching row in
+// HUMAN_BENCHMARKS so every system is compared like-for-like; a disengagement
+// has no human equivalent, so it is compared against the all-crash rate and
+// the UI flags that comparison as approximate.
+export const EVENT_TYPES = {
+  "disengagement":  { label: "critical disengagement", human: "crash", approx: true },
+  "crash":          { label: "crash",                  human: "crash" },
+  "injury crash":   { label: "injury crash",           human: "injury crash" },
+  "serious injury": { label: "serious-injury crash",   human: "serious injury" },
+  "fatal crash":    { label: "fatal crash",            human: "fatal crash" },
+};
+
+export const SAFETY_POINTS = [
+  { id: "tesla-amci",      miles: 13,       label: "Tesla FSD v12.5",  short: "v12.5 (AMCI)",   sublabel: "AMCI independent test",       event: "disengagement",  category: "tesla", source: SOURCES.electrekAmci },
+  { id: "tesla-v12-5",     miles: 183,      label: "Tesla FSD v12.5",  short: "v12.5",          sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
+  { id: "tesla-v13",       miles: 493,      label: "Tesla FSD v13",    short: "v13",            sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
+  { id: "tesla-v14",       miles: 1454,     label: "Tesla FSD v14",    short: "v14",            sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
+  { id: "tesla-robotaxi",  miles: 57000,    label: "Tesla Robotaxi",   short: "Robotaxi",       sublabel: "Austin crash rate",           event: "crash",          category: "tesla", source: SOURCES.fortune },
+  { id: "waymo-testing",   miles: 29000,    label: "Waymo (testing)",  short: "Testing",        sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", source: SOURCES.caDmv },
+  { id: "waymo-injury",    miles: 1350000,  label: "Waymo",            short: "Injury",         sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", source: SOURCES.kusano2025 },
+  { id: "waymo-serious",   miles: 50000000, label: "Waymo",            short: "Serious injury", sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", source: SOURCES.waymoSafety },
+  { id: "human-injury",    miles: 252000,   label: "Human drivers",    short: "Injury",         sublabel: "Injury crash rate",           event: "injury crash",   category: "human", source: SOURCES.kusano2025 },
+  { id: "human-crash",     miles: 529000,   label: "Human drivers",    short: "All crashes",    sublabel: "All police-reported crashes", event: "crash",          category: "human", source: SOURCES.nhtsa },
+  { id: "human-serious",   miles: 4300000,  label: "Human drivers",    short: "Serious injury", sublabel: "Serious injury crash rate (Waymo benchmark)", event: "serious injury", category: "human", source: SOURCES.waymoSafety },
+  { id: "human-fatal",     miles: 86000000, label: "Human drivers",    short: "Fatal",          sublabel: "Fatal crash rate",            event: "fatal crash",    category: "human", source: SOURCES.nhtsa },
 ];
 
-// Resolve color from (category, intensity) — done once at module load so the UI
-// can read d.color directly. New rows added below will pick up colors automatically.
-NINES_SCALE_DATA.forEach(function(d) { d.color = CAT_COLORS[d.category][d.intensity]; });
+// Human benchmark per event type, looked up from the human rows above so each
+// number lives in exactly one place.
+export const HUMAN_BENCHMARKS = Object.fromEntries(
+  SAFETY_POINTS.filter((d) => d.category === "human").map((d) => [d.event, d])
+);
 
 // ============================================================
 // STATS — the four "headline" stat cards on each page.
@@ -204,29 +197,30 @@ NINES_SCALE_DATA.forEach(function(d) { d.color = CAT_COLORS[d.category][d.intens
 //   label    — small uppercase title
 //   value    — big number (string — keep formatting like "50M mi" or "1,454")
 //   sublabel — one-line context
-//   accent   — color for the value
+//   series   — optional "tesla" | "waymo" | "human": draws a small color key
+//              beside the label so the tile matches the charts
 //   source   — SOURCES.x or inline { url, label }
 // ============================================================
 
 export const HOME_STATS = [
-  { label: "Waymo best",                   value: "50M mi",   sublabel: "per serious injury crash",       accent: "#3b82f6", source: SOURCES.waymoSafety },
-  { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement",     accent: "#f59e0b", source: SOURCES.teslaTracker },
-  { label: "Human baseline",               value: "529K mi",  sublabel: "per police-reported crash",      accent: "#a3a3a3", source: SOURCES.nhtsa },
-  { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "vs. Elluswamy 670K mi target",   accent: "#ef4444", source: SOURCES.electrekMusk },
+  { label: "Waymo best",                   value: "50M mi",   sublabel: "per serious injury crash",       series: "waymo", source: SOURCES.waymoSafety },
+  { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement",     series: "tesla", source: SOURCES.teslaTracker },
+  { label: "Human baseline",               value: "529K mi",  sublabel: "per police-reported crash",      series: "human", source: SOURCES.nhtsa },
+  { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "vs. Elluswamy 670K mi target", source: SOURCES.electrekMusk },
 ];
 
 export const WAYMO_STATS = [
-  { label: "Driverless miles",             value: "220M+",  sublabel: "Rider-only, through Mar 2026",  accent: "#3b82f6", source: SOURCES.waymoSafety },
-  { label: "Weekly rides",                 value: "500K",   sublabel: "Target: 1M/week by end of 2026", accent: "#60a5fa", source: SOURCES.alphabetQ1 },
-  { label: "Safety vs humans",             value: "↓94%",   sublabel: "Fewer serious-injury crashes",  accent: "#22c55e", source: SOURCES.waymoSafety },
-  { label: "Cities",                       value: "11",     sublabel: "1,400+ sq mi service area",     accent: "#8b5cf6", source: SOURCES.electrekWaymo1400 },
+  { label: "Driverless miles",             value: "220M+",  sublabel: "Rider-only, through Mar 2026", source: SOURCES.waymoSafety },
+  { label: "Weekly rides",                 value: "500K",   sublabel: "Target: 1M/week by end of 2026", source: SOURCES.alphabetQ1 },
+  { label: "Safety vs humans",             value: "↓94%",   sublabel: "Fewer serious-injury crashes", source: SOURCES.waymoSafety },
+  { label: "Cities",                       value: "11",     sublabel: "1,400+ sq mi service area", source: SOURCES.electrekWaymo1400 },
 ];
 
 export const TESLA_STATS = [
-  { label: "FSD v14 best",                 value: "1,454",  sublabel: "Miles / critical disengagement", accent: "#fbbf24", source: SOURCES.teslaTracker },
-  { label: "Improvement",                  value: "8×",     sublabel: "v12.5 to v14 in 14 months",      accent: "#f59e0b", source: SOURCES.teslaTracker },
-  { label: "Robotaxi fleet (TX)",          value: "~42",    sublabel: "vs. Waymo's 577 — state filings", accent: "#ef4444", source: SOURCES.cnbcTexasFleet },
-  { label: "Gap to unsupervised",          value: "~460×",  sublabel: "vs. Elluswamy 670K target",      accent: "#dc2626", source: SOURCES.electrekMusk },
+  { label: "FSD v14 best",                 value: "1,454",  sublabel: "Miles / critical disengagement", source: SOURCES.teslaTracker },
+  { label: "Improvement",                  value: "8×",     sublabel: "v12.5 to v14 in 14 months", source: SOURCES.teslaTracker },
+  { label: "Robotaxi fleet (TX)",          value: "~42",    sublabel: "vs. Waymo's 577 — state filings", source: SOURCES.cnbcTexasFleet },
+  { label: "Gap to unsupervised",          value: "~460×",  sublabel: "vs. Elluswamy 670K target", source: SOURCES.electrekMusk },
 ];
 
 // ============================================================
@@ -238,6 +232,12 @@ export const TESLA_STATS = [
 // goodFlag: true = outperforming human average (green), false = worse (amber/red),
 //           null = no comparable data ("—")
 // ============================================================
+
+// The line under the table that explains the "*" cells.
+export const CRASH_RATES_FOOTNOTE = {
+  text: "* Waymo: zero fatalities in 220M+ driverless miles. Tesla robotaxi rate from an analysis of NHTSA filings (Feb 2026).",
+  source: SOURCES.fortune,
+};
 
 export const CRASH_RATES = [
   { metric: "Police-reported crash", human: "529K", waymo: "~476K",         tesla: "~57K",     waymoGood: false, teslaGood: false, source: SOURCES.nhtsa },
@@ -261,17 +261,18 @@ export const WAYMO_CRASH_REDUCTION = [
 ];
 
 // ============================================================
-// WAYMO_MILES_TIMELINE — cumulative driverless miles by year (in millions).
+// WAYMO_MILES_TIMELINE — cumulative driverless miles (in millions).
+// date is "YYYY-MM" and places the point on the time axis; period is the label.
 // ============================================================
 
 export const WAYMO_MILES_TIMELINE = [
-  { period: "2020",     miles: 6 },
-  { period: "2021",     miles: 10 },
-  { period: "2022",     miles: 20 },
-  { period: "2023",     miles: 35 },
-  { period: "2024",     miles: 60 },
-  { period: "Sep 2025", miles: 127 },
-  { period: "Mar 2026", miles: 221 },
+  { date: "2020-12", period: "2020",     miles: 6 },
+  { date: "2021-12", period: "2021",     miles: 10 },
+  { date: "2022-12", period: "2022",     miles: 20 },
+  { date: "2023-12", period: "2023",     miles: 35 },
+  { date: "2024-12", period: "2024",     miles: 60 },
+  { date: "2025-09", period: "Sep 2025", miles: 127 },
+  { date: "2026-03", period: "Mar 2026", miles: 221 },
 ];
 
 // ============================================================
@@ -285,25 +286,35 @@ export const WAYMO_INCIDENTS = [
   { date: "Jun 2026", text: "Recall of ~4,000 vehicles after 13 instances of entering closed highway work zones", severity: "medium", source: SOURCES.tcWorkZone },
   { date: "May 2026", text: "Full-fleet recall (3,791 vehicles) after a San Antonio flooded-road incident — OTA fix", severity: "medium", source: SOURCES.electrekFlood },
   { date: "Jan 2026", text: "NHTSA probe: robotaxi struck a child near a Santa Monica school",   severity: "high",   source: SOURCES.foxSantaMonica },
-  { date: "Oct 2025", text: "NHTSA investigation into ~20 school bus passing incidents in Austin; 3,067-vehicle recall followed", severity: "high", source: SOURCES.npr },
   { date: "Dec 2025", text: "SF power outage caused some vehicles to freeze in intersections",   severity: "medium", source: SOURCES.slashdot },
+  { date: "Oct 2025", text: "NHTSA investigation into ~20 school bus passing incidents in Austin; 3,067-vehicle recall followed", severity: "high", source: SOURCES.npr },
   { date: "Ongoing",  text: "Operates only in pre-mapped geofenced areas; no snow capability",    severity: "info",   source: null },
   { date: "Ongoing",  text: "Remote operators assist with edge cases — not fully independent",    severity: "info",   source: null },
 ];
 
 // ============================================================
-// TESLA_VERSION_PROGRESS — version-over-version improvement bars.
+// TESLA_VERSION_PROGRESS — version-over-version trend on the Tesla page.
 // Crowdsourced, biased optimistic — see note in dashboard.
+// date is "YYYY-MM" (roughly when the version reached wide release) and
+// sets the point's position on the time axis.
 // ============================================================
 
 export const TESLA_VERSION_PROGRESS = [
-  { version: "v11",   date: "2023 Q1", milesPerIntervention: 5,    nines: 0.7 },
-  { version: "v12.3", date: "2024 Q2", milesPerIntervention: 80,   nines: 1.9 },
-  { version: "v12.5", date: "2024 Q3", milesPerIntervention: 183,  nines: 2.3 },
-  { version: "v13",   date: "2025 Q1", milesPerIntervention: 493,  nines: 2.7 },
-  { version: "v13.2", date: "2025 Q2", milesPerIntervention: 700,  nines: 2.8 },
-  { version: "v14",   date: "2025 Q4", milesPerIntervention: 1454, nines: 3.2 },
+  { version: "v11",   date: "2023-03", milesPerIntervention: 5 },
+  { version: "v12.3", date: "2024-04", milesPerIntervention: 80 },
+  { version: "v12.5", date: "2024-08", milesPerIntervention: 183 },
+  { version: "v13",   date: "2025-01", milesPerIntervention: 493 },
+  { version: "v13.2", date: "2025-04", milesPerIntervention: 700 },
+  { version: "v14",   date: "2025-11", milesPerIntervention: 1454 },
 ];
+
+// Tesla's own bar for unsupervised driving: miles between critical
+// interventions. Drawn as the target line on the version chart.
+export const TESLA_TARGET = {
+  miles: 670000,
+  label: "Elluswamy's unsupervised target",
+  source: SOURCES.electrekMusk,
+};
 
 // ============================================================
 // TESLA_FSD_SUPERVISED / TESLA_ROBOTAXI — side-by-side fact lists.
@@ -314,7 +325,7 @@ export const TESLA_VERSION_PROGRESS = [
 // ============================================================
 
 export const TESLA_FSD_SUPERVISED = [
-  { label: "Wide release",             value: "v14.2 (59% of fleet)", source: { url: "https://www.notateslaapp.com/fsd-beta/", label: "NotATeslaApp" } },
+  { label: "Wide release",             value: "v14.2 (59% of fleet)", source: { url: "https://www.notateslaapp.com/fsd-beta/", label: "NotATeslaApp", type: "press" } },
   { label: "Best crowdsourced rate",   value: "1,454 mi/int",    source: SOURCES.teslaTracker },
   { label: "Independent test (AMCI)",  value: "13 mi/int",       source: SOURCES.electrekAmci },
   { label: "Coast-to-coast record",    value: "2,732 mi, 0 int", source: SOURCES.teslarati },
@@ -334,41 +345,51 @@ export const TESLA_ROBOTAXI = [
   { label: "vs. human avg",        value: "~9x worse",            source: SOURCES.fortune },
 ];
 
-// Tesla version-projection text (shown as an aside under the version chart).
-// If the per-version improvement rate changes, edit the multiplier and the
-// projected values together.
+// Independent (non-crowdsourced) tests, drawn as hollow markers on the
+// version chart so readers can see how far they sit from the crowd numbers.
+export const TESLA_INDEPENDENT_TESTS = [
+  { label: "AMCI test, v12.5", date: "2024-09", miles: 13, source: SOURCES.electrekAmci },
+];
+
+// The version chart projects the trend forward from `fromVersion` to the
+// latest version, at the same yearly growth rate, until it meets TESLA_TARGET.
+// The chart computes the date itself; only the caveat is written here.
 export const TESLA_PROJECTION = {
-  multiplier: "~2.7×",
-  projections: "v15 → ~3,900 mi · v16 → ~10,500 mi · v17 → ~28,400 mi · v18 → ~76,700 mi · v19 → ~207,000 mi · v20 → ~560,000 mi",
-  caveat: "~6 more versions (~3 years) to reach the unsupervised threshold — if the rate holds. Historically, improvement rates slow at higher reliability.",
+  fromVersion: "v12.5",
+  caveat: "A straight-line guess, not a forecast. Improvement usually slows as reliability rises.",
 };
 
 // ============================================================
 // MUSK_PREDICTIONS — track record of public claims vs. what shipped.
-// Each entry is { year, claim, result, source }.
+// Each entry is { said, due, done, claim, result, source }:
+//   said — year the claim was made
+//   due  — year it was promised for
+//   done — year it actually happened, or null if it still hasn't
+// The timeline chart draws said→due as the promise and due→done (or
+// due→today) as the delay.
 // ============================================================
 
 export const MUSK_PREDICTIONS = [
-  { year: "2015", claim: "Full autonomy by 2018",                  result: "Not achieved",                          source: SOURCES.electrekMusk },
-  { year: "2016", claim: "LA to NY autonomous by end of 2017",     result: "Achieved Dec 2025 — 8 years late",      source: SOURCES.teslarati },
-  { year: "2019", claim: "1 million robotaxis by 2020",            result: "~42 in Texas as of May 2026",           source: SOURCES.cnbcTexasFleet },
-  { year: "2022", claim: "Robotaxi production in 2024",            result: "First Cybercab built Feb 2026",         source: SOURCES.techCrunch },
-  { year: "2025", claim: "Millions of robotaxis in H2 2025",       result: "~42 operating, mid-2026",               source: SOURCES.cnbcTexasFleet },
-  { year: "2025", claim: "HW3 cars can do unsupervised FSD",       result: "Admitted upgrade needed",               source: SOURCES.techCrunch },
+  { said: 2015, due: 2018, done: null, claim: "Full autonomy by 2018",              result: "Not achieved",                     source: SOURCES.electrekMusk },
+  { said: 2016, due: 2017, done: 2025, claim: "LA to NY autonomous by end of 2017", result: "Done Dec 2025 (supervised), 8 years late", source: SOURCES.teslarati },
+  { said: 2019, due: 2020, done: null, claim: "1 million robotaxis by 2020",        result: "~42 in Texas as of May 2026",      source: SOURCES.cnbcTexasFleet },
+  { said: 2022, due: 2024, done: 2026, claim: "Robotaxi production in 2024",        result: "First Cybercab built Feb 2026",    source: SOURCES.techCrunch },
+  { said: 2025, due: 2025, done: null, claim: "Millions of robotaxis in H2 2025",   result: "~42 operating, mid-2026",          source: SOURCES.cnbcTexasFleet },
+  { said: 2019, due: 2020, done: null, claim: "HW3 cars can do unsupervised FSD",   result: "Jan 2025: admitted upgrade needed", source: SOURCES.techCrunch },
 ];
 
 // ============================================================
 // TARGET_THRESHOLDS — Road to Steeringless reliability targets.
 //
-// nines = log10(miles per event). 5.7 = human average crash rate.
-// description is the rationale; color is the left-border accent.
+// miles = miles per crash the system must reach. 529K = human average.
+// description is the rationale.
 // ============================================================
 
 export const TARGET_THRESHOLDS = [
-  { nines: 5.7, label: "Match human average",   description: "System matches avg human crash rate",                                            color: "#fbbf24" },
-  { nines: 6.5, label: "Regulatory confidence", description: "~5x better than humans — likely threshold for unsupervised permits",             color: "#22c55e" },
-  { nines: 7.0, label: "Remove steering wheel", description: "~20x better than humans — plausible threshold for steeringless mass-market",     color: "#3b82f6" },
-  { nines: 7.5, label: "Child safety threshold", description: "~50x better than humans — trust a child alone in the vehicle",                   color: "#a855f7" },
+  { miles:   529000, label: "Match human average",   description: "Break-even with the average human driver" },
+  { miles:  3200000, label: "Regulatory confidence", description: "Likely bar for unsupervised permits at scale" },
+  { miles: 10000000, label: "Remove steering wheel", description: "Plausible bar for mass-market cars with no wheel" },
+  { miles: 32000000, label: "Child safety threshold", description: "Enough to trust a child riding alone" },
 ];
 
 // ============================================================
@@ -390,17 +411,19 @@ export const REGULATORY_BARRIERS = [
 // EXPERT_TIMELINES — consensus from McKinsey/S&P/WEF/BCG on rollout dates.
 //
 // year is a string so it can be "Now", "~2028", "2040s–60s", etc.
-// color is the left-border + year-text accent.
+// tone is how likely/close it is: "good" (happening or ahead of schedule),
+// "neutral" (consensus), "caution" (optimistic forecast), "far" (long-range
+// or doubted). The theme picks the color for each tone.
 // ============================================================
 
 export const EXPERT_TIMELINES = [
-  { year: "Now",        event: "L4 robotaxis in select cities (Waymo)",          status: "✅ Happening",          color: "#22c55e", source: SOURCES.axios },
-  { year: "~2028",      event: "L4 robotaxis in 20+ cities globally",            status: "Ahead of schedule — ~40 cities live (US + China)", color: "#22c55e", source: SOURCES.baiduIr },
-  { year: "~2030",      event: "Large-scale L4 robotaxi rollout",                status: "Consensus",             color: "#60a5fa", source: SOURCES.mckinsey },
-  { year: "~2032",      event: "L4 in privately owned vehicles (limited)",       status: "Optimistic",            color: "#fbbf24", source: SOURCES.mckinsey },
-  { year: "~2035",      event: "<6% of new vehicles sold have L4",               status: "Forecast",              color: "#fbbf24", source: SOURCES.mckinsey },
-  { year: "2035+",      event: "Consumer steeringless vehicles (mass market)",   status: "'Unlikely by 2035'",    color: "#ef4444", source: SOURCES.spGlobal },
-  { year: "2040s–60s",  event: "Most safety/mobility benefits materialize",      status: "Long-range",            color: "#ef4444", source: SOURCES.wef },
+  { year: "Now",        event: "L4 robotaxis in select cities (Waymo)",          status: "Happening",          tone: "good", source: SOURCES.axios },
+  { year: "~2028",      event: "L4 robotaxis in 20+ cities globally",            status: "Ahead of schedule — ~40 cities live (US + China)", tone: "good", source: SOURCES.baiduIr },
+  { year: "~2030",      event: "Large-scale L4 robotaxi rollout",                status: "Consensus",             tone: "neutral", source: SOURCES.mckinsey },
+  { year: "~2032",      event: "L4 in privately owned vehicles (limited)",       status: "Optimistic",            tone: "caution", source: SOURCES.mckinsey },
+  { year: "~2035",      event: "<6% of new vehicles sold have L4",               status: "Forecast",              tone: "caution", source: SOURCES.mckinsey },
+  { year: "2035+",      event: "Consumer steeringless vehicles (mass market)",   status: "'Unlikely by 2035'",    tone: "far", source: SOURCES.spGlobal },
+  { year: "2040s–60s",  event: "Most safety/mobility benefits materialize",      status: "Long-range",            tone: "far", source: SOURCES.wef },
 ];
 
 // ============================================================
@@ -428,10 +451,10 @@ export const CHILD_SAFETY = {
 // ============================================================
 
 export const OTHERS_STATS = [
-  { label: "Apollo Go rides",      value: "22M+",   sublabel: "Cumulative, 27 cities worldwide",     accent: "#22d3ee", source: SOURCES.baiduIr },
-  { label: "Pony.ai fleet",        value: "1,700+", sublabel: "Targeting 3,500+ by end of 2026",     accent: "#a78bfa", source: SOURCES.ponyIr },
-  { label: "Aurora truck miles",   value: "250K+",  sublabel: "Driverless, zero at-fault collisions", accent: "#34d399", source: SOURCES.auroraIr },
-  { label: "Zoox cities",          value: "2",      sublabel: "Las Vegas & SF; Miami, Austin next",  accent: "#f472b6", source: SOURCES.electrekZoox },
+  { label: "Apollo Go rides",      value: "22M+",   sublabel: "Cumulative, 27 cities worldwide", source: SOURCES.baiduIr },
+  { label: "Pony.ai fleet",        value: "1,700+", sublabel: "Targeting 3,500+ by end of 2026", source: SOURCES.ponyIr },
+  { label: "Aurora truck miles",   value: "250K+",  sublabel: "Driverless, zero at-fault collisions", source: SOURCES.auroraIr },
+  { label: "Zoox cities",          value: "2",      sublabel: "Las Vegas & SF; Miami, Austin next", source: SOURCES.electrekZoox },
 ];
 
 export const OTHER_PLAYERS = [

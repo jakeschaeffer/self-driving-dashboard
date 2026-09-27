@@ -1,0 +1,33 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0; /* lets wide children scroll inside instead of stretching the page */
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 18px;
+  border-top: 2px solid var(--ink);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.title {
+  font-size: clamp(28px, 3.4vw, 36px);
+  font-weight: 700;
+}
+
+.sub {
+  font-size: 16px;
+  color: var(--ink-2);
+  max-width: 70ch;
+}

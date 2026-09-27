@@ -1,0 +1,30 @@
+.log { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+
+.item {
+  display: grid;
+  grid-template-columns: 84px 124px minmax(0, 1fr);
+  gap: 16px;
+  align-items: baseline;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.pill { display: flex; }
+.text { font-size: 15px; color: var(--ink); line-height: 1.5; }
+
+@media (max-width: 600px) {
+  .item {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "date pill" "text text";
+    gap: 6px 12px;
+  }
+  .date { grid-area: date; }
+  .pill { grid-area: pill; justify-content: flex-end; }
+  .text { grid-area: text; }
+}

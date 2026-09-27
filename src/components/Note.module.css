@@ -1,0 +1,34 @@
+.note {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 18px 14px 14px;
+  background: var(--warn-bg);
+  border-radius: var(--radius);
+  max-width: 80ch;
+}
+
+/* Caution sign: a yellow square turned 45°, with a black inset border. */
+.diamond {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin: 4px 5px 0;
+  transform: rotate(45deg);
+  background: var(--caution);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1.5px var(--caution), inset 0 0 0 2.5px var(--caution-ink);
+}
+.diamond > span {
+  transform: rotate(-45deg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--caution-ink);
+}
+
+.body { font-size: 15px; line-height: 1.55; color: var(--ink-2); }
+.title { color: var(--ink); font-weight: 600; }
