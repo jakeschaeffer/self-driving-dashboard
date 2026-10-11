@@ -2,7 +2,7 @@
 
 The data this site shows lives in **`data.js`**. The dashboard imports from there and renders it. If you want to change a number, add a row, or swap a citation, that's the only file you need to touch — no JSX edits required for routine updates.
 
-The UI lives in `src/`: `src/App.jsx` (shell + hash-routed tab nav), `src/ui.jsx` (shared primitives and the custom chart components — no charting library), and one file per tab in `src/pages/`.
+The UI lives in `src/`: `src/App.jsx` (shell + hash-routed tab nav), `src/ui.jsx` (shared primitives, design tokens and the older chart components — no charting library), `src/charts/` (interactive SVG/HTML charts with hover tooltips and a collapsible data table), and one file per tab in `src/pages/`.
 
 This doc covers:
 1. [What's in `data.js`](#whats-in-datajs) — every export and what it powers
@@ -58,7 +58,7 @@ Shape:
 ### Stat cards (per page)
 - `HOME_STATS` — the four cards above the ladder
 - `WAYMO_STATS` — Waymo deep dive
-- `TESLA_STATS` — Tesla FSD deep dive
+- `TESLA_ROBOTAXI_STATS` — the robotaxi tiles on the Tesla page
 
 Shape: `{ label, value, sublabel, accent, source }`. `value` is a string (we keep formatting like `"50M mi"` or `"~460×"`).
 
@@ -74,14 +74,15 @@ Cumulative driverless miles by year (in millions). Drives the bar chart on the W
 ### `WAYMO_INCIDENTS`
 Known limitations and incidents. `severity` is `"high" | "medium" | "info"`. `source` is optional — the two "Ongoing" entries don't cite a single article.
 
-### `TESLA_VERSION_PROGRESS`
-Version-over-version improvement. Drives the horizontal-bar list (`HBarList` in `src/ui.jsx`) on the Tesla page.
+### Tesla page
+The Tesla page is one chart (or tile row) per question, each followed by a `Caveats` list. Tesla-reported and crowdsourced numbers are drawn in the amber accent; independent or like-for-like checks are drawn in gray.
 
-### `TESLA_FSD_SUPERVISED` / `TESLA_ROBOTAXI`
-Side-by-side fact lists. Each row is `{ label, value, source? }` — sources render inline next to the label.
-
-### `TESLA_PROJECTION`
-The "If Tesla maintains ~2.7× per version" callout under the version chart. `{ multiplier, projections, caveat }` — three strings.
+- **`TESLA_VERSION_PROGRESS`** — crowdsourced miles per critical disengagement, `{ version, date: "YYYY Qn", milesPerIntervention }`. Plotted as the amber line in `LogTrendChart`. Add a row per new version; the chart, its "~N× gap" label and the data table all update.
+- **`TESLA_INDEPENDENT_TESTS`** — third-party tests (AMCI today), same shape plus `{ tester, source }`. Plotted as gray points.
+- **`TESLA_UNSUPERVISED_TARGET`** — `{ miles, label, source }`. The horizontal target line.
+- **`TESLA_FSD_COLLISIONS`** — Tesla's raw miles per major collision (FSD, manual with/without active safety, US average) plus `asOf`. Shown in the crash chart's data table.
+- **`TESLA_SAFETY_RATIOS`** — the bars in `RatioBars`: `{ label, sub, ratio, headline?, approx?, detail, source }`. Ratios built from `TESLA_FSD_COLLISIONS` are computed, so updating the raw miles is enough. `headline: true` draws the bar in amber.
+- **`TESLA_ROBOTAXI_STATS`** — robotaxi stat tiles, same shape as the other `*_STATS` arrays.
 
 ### `MUSK_PREDICTIONS`
 Track record of public claims vs. what shipped. `{ year, claim, result, source }`.
@@ -123,8 +124,8 @@ When you're adding a row, ask: would I want my reader to see this number with th
 ## Update workflow
 
 ### Updating a single number (e.g. Tesla FSD v14 → v14.3 release)
-1. Find the row in `data.js`. For the home/ladder, that's `NINES_SCALE_DATA`. For the Tesla page version chart, `TESLA_VERSION_PROGRESS`. For stat cards, the corresponding `*_STATS` array.
-2. Change `miles`, `nines` (= `Math.log10(miles)` rounded to one decimal), and `label`/`sublabel` if the version changed.
+1. Find the row in `data.js`. For the home/ladder, that's `NINES_SCALE_DATA`. For the Tesla page version chart, add a row to `TESLA_VERSION_PROGRESS`. For stat cards, the corresponding `*_STATS` array.
+2. On the ladder, change `miles`, `nines` (= `Math.log10(miles)` rounded to one decimal), and `label`/`sublabel` if the version changed. (The Tesla chart computes its own log scale — just `milesPerIntervention`.)
 3. Bump `SITE.lastUpdated`.
 4. Visually verify all five tabs at desktop and 320px mobile.
 
@@ -170,7 +171,7 @@ If a new release looks like a "system + miles per event + source" (which most sa
 If you have data that genuinely doesn't fit (e.g. a per-state regulatory map, a video-evidence table, a public-trust survey time series):
 
 1. Add a new export to `data.js` with a clear name and shape comment.
-2. Add a new `<Section>` to the relevant page in `autonomous-driving-dashboard.jsx`.
+2. Add a new `<Section>` to the relevant page in `src/pages/`.
 3. Render it. Keep the shape simple — `{ label, value, source }` is fine for most lists.
 4. Add the new shape to "What's in `data.js`" above so the next person knows it exists.
 
@@ -188,6 +189,7 @@ The dashboard does NOT enforce any particular shape; the structured data file is
 Some content lives in the JSX, not `data.js`, because it's prose-shaped rather than data-shaped:
 
 - **The Note blocks** under each section. They explain methodology and caveats; they're tied to specific UI placement.
+- **The `Caveats` lists** on the Tesla page — one short, sourced line each. Same reasoning as Note blocks; keep each caveat to one line.
 - **The "key insight" callout** on the Overview page. It cites the ~360× gap multiplier — when that changes in data.js, also update the callout.
 - **Section titles and subtitles** for the in-page `<Section>` blocks. Page-level titles are in `PAGES` in data.js; section-level subtitles are still inline in `src/pages/*.jsx`.
 

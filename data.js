@@ -32,13 +32,11 @@ export const SOURCES = {
   // Academic / peer-reviewed
   kusano2025:      { url: "https://www.tandfonline.com/doi/full/10.1080/15389588.2024.2380786", label: "Kusano et al. 2025", type: "academic" },
   rand:            { url: "https://www.rand.org/pubs/research_reports/RR1478.html",             label: "RAND",               type: "academic" },
-  iihs:            { url: "https://www.iihs.org/news/detail/first-partial-driving-automation-safeguard-ratings-show-industry-has-work-to-do", label: "IIHS",        type: "academic" },
   chop:            { url: "https://injury.research.chop.edu/blog/posts/self-driving-vehicles-and-child-passenger-safety", label: "Children's Hospital of Philadelphia", type: "academic" },
 
   // Company / self-reported
   waymoSafety:     { url: "https://waymo.com/safety/impact",                                    label: "Waymo Safety",       type: "company" },
   swissRe:         { url: "https://waymo.com/blog/2024/12/new-swiss-re-study-waymo",            label: "Swiss Re / Waymo Dec 2024", type: "company" },
-  teslaSafety:     { url: "https://www.tesla.com/VehicleSafetyReport",                          label: "Vehicle Safety Reports", type: "company" },
 
   // Crowdsourced
   teslaTracker:    { url: "https://www.teslafsdtracker.com/",                                   label: "teslafsdtracker.com", type: "crowdsource" },
@@ -54,8 +52,6 @@ export const SOURCES = {
   slashdot:        { url: "https://tech.slashdot.org/story/25/12/27/0645206/waymo-updates-vehicles-to-better-handle-power-outages---but-still-faces-criticism", label: "Slashdot", type: "press" },
   techCrunch:      { url: "https://techcrunch.com/2025/01/30/elon-musk-reveals-elon-musk-was-wrong-about-full-self-driving/", label: "TechCrunch", type: "press" },
   teslarati:       { url: "https://www.teslarati.com/tesla-fsd-successfully-completes-full-coast-to-coast-drive-with-zero-interventions/", label: "Teslarati", type: "press" },
-  notATeslaApp:    { url: "https://www.notateslaapp.com/news/3514/tesla-owner-reaches-almost-13000-miles-of-intervention-free-fsd-driving", label: "NotATeslaApp", type: "press" },
-  openTools:       { url: "https://opentools.ai/news/nhtsa-investigates-teslas-fsd-mode-for-traffic-safety-violations-what-it-means-for-the-future-of-autonomous-driving", label: "OpenTools", type: "press" },
 
   // Industry forecasts
   mckinsey:        { url: "https://www.mckinsey.com/features/mckinsey-center-for-future-mobility/our-insights/future-of-autonomous-vehicles-industry", label: "McKinsey", type: "press" },
@@ -73,10 +69,6 @@ export const SOURCES = {
   electrekFlood:   { url: "https://electrek.co/2026/05/12/waymo-recalls-3791-robotaxis-flooded-road-ota-software-fix/", label: "Electrek", type: "press" },
   tcWorkZone:      { url: "https://techcrunch.com/2026/06/18/waymo-recalls-nearly-4000-robotaxis-to-stop-them-driving-into-highway-construction-zones/", label: "TechCrunch", type: "press" },
   foxSantaMonica:  { url: "https://www.foxbusiness.com/lifestyle/waymo-recalls-massive-autonomous-fleet-incident-flags-major-safety-issue", label: "Fox Business", type: "press" },
-  cnbcTexasFleet:  { url: "https://www.cnbc.com/2026/05/28/tesla-robotaxi-fleet-texas-one-tenth-size-of-waymos-filings-reveal.html", label: "CNBC", type: "press" },
-  electrekUnredact:{ url: "https://electrek.co/2026/05/15/tesla-unredacts-robotaxi-crash-narratives-nhtsa/", label: "Electrek", type: "press" },
-  engadgetMiami:   { url: "https://www.engadget.com/2207974/tesla-expands-robotaxi-service-to-small-section-of-miami/", label: "Engadget", type: "press" },
-  techtimesAustin: { url: "https://www.techtimes.com/articles/317890/20260605/tesla-robotaxi-covers-entire-austin-metro-245-square-miles-about-20-driverless-cars.htm", label: "TechTimes", type: "press" },
   nhtsaSgo:        { url: "https://www.nhtsa.gov/laws-regulations/standing-general-order-crash-reporting", label: "NHTSA SGO", type: "regulator" },
   baiduIr:         { url: "https://ir.baidu.com/news-releases/news-release-details/baidu-announces-first-quarter-2026-results/", label: "Baidu Q1 2026", type: "company" },
   cnevApollo:      { url: "https://cnevpost.com/2026/02/27/baidu-apollo-go-robotaxi-300000-weekly-rides-expands-to-south-korea/", label: "CNEVPost", type: "press" },
@@ -90,6 +82,14 @@ export const SOURCES = {
   tcMayMobility:   { url: "https://techcrunch.com/2025/09/10/lyfts-modest-robotaxi-launch-highlights-growing-gap-with-uber-and-waymo/", label: "TechCrunch", type: "press" },
   tcMotional:      { url: "https://techcrunch.com/2026/01/11/motional-puts-ai-at-center-of-robotaxi-reboot-as-it-targets-2026-for-driverless-service/", label: "TechCrunch", type: "press" },
   scdCruise:       { url: "https://www.smartcitiesdive.com/news/general-motors-shuts-cruise-robotaxi-unit-mary-barra/735205/", label: "Smart Cities Dive", type: "press" },
+
+  // Oct 2026 research pass (Tesla)
+  teslaFsdSafety:  { url: "https://www.tesla.com/fsd/safety", label: "Tesla", type: "company" },
+  teslaQ2:         { url: "https://evwire.com/p/tesla-q2-2026-earnings-results", label: "Tesla Q2 2026", type: "company" },
+  robotaxiTracker: { url: "https://eletric-vehicles.com/tesla/tesla-robotaxi-fleet-tops-1000-vehicles-tracking-site-shows/", label: "Robotaxi Tracker", type: "crowdsource" },
+  reutersFsd:      { url: "https://electrek.co/2026/05/28/tesla-fsd-safety-stats-misleading-reuters-investigation/", label: "Reuters", type: "press" },
+  electrekFeedback:{ url: "https://electrek.co/2026/05/14/tesla-forces-fsd-intervention-feedback-mandatory/", label: "Electrek", type: "press" },
+  streak25k:       { url: "https://www.notateslaapp.com/news/4562/tesla-driver-hits-25000-mile-fsd-streak-unlocks-celebration-animation", label: "NotATeslaApp", type: "press" },
 };
 
 // ============================================================
@@ -97,7 +97,7 @@ export const SOURCES = {
 // ============================================================
 
 export const SITE = {
-  lastUpdated: "Jul 2026", // shown in the header. Update whenever data changes.
+  lastUpdated: "Oct 2026", // shown in the header. Update whenever data changes.
 };
 
 // ============================================================
@@ -222,13 +222,6 @@ export const WAYMO_STATS = [
   { label: "Cities",                       value: "11",     sublabel: "1,400+ sq mi service area",     accent: "#8b5cf6", source: SOURCES.electrekWaymo1400 },
 ];
 
-export const TESLA_STATS = [
-  { label: "FSD v14 best",                 value: "1,454",  sublabel: "Miles / critical disengagement", accent: "#fbbf24", source: SOURCES.teslaTracker },
-  { label: "Improvement",                  value: "8×",     sublabel: "v12.5 to v14 in 14 months",      accent: "#f59e0b", source: SOURCES.teslaTracker },
-  { label: "Robotaxi fleet (TX)",          value: "~42",    sublabel: "vs. Waymo's 577 — state filings", accent: "#ef4444", source: SOURCES.cnbcTexasFleet },
-  { label: "Gap to unsupervised",          value: "~460×",  sublabel: "vs. Elluswamy 670K target",      accent: "#dc2626", source: SOURCES.electrekMusk },
-];
-
 // ============================================================
 // CRASH_RATES — table on the AV vs Humans page.
 //
@@ -292,56 +285,78 @@ export const WAYMO_INCIDENTS = [
 ];
 
 // ============================================================
-// TESLA_VERSION_PROGRESS — version-over-version improvement bars.
-// Crowdsourced, biased optimistic — see note in dashboard.
+// TESLA DISENGAGEMENTS — the log-scale trend chart on the Tesla page.
+//
+// TESLA_VERSION_PROGRESS: crowdsourced (owner-reported), biased optimistic.
+//   date is "YYYY Qn" — the chart places each point mid-quarter.
+// TESLA_INDEPENDENT_TESTS: third-party tests on fixed routes; plotted as a
+//   separate gray series so the gap to crowdsourced numbers is visible.
+// TESLA_UNSUPERVISED_TARGET: the horizontal target line. The "N× gap"
+//   label is computed from this and the latest version, so it stays in sync.
 // ============================================================
 
 export const TESLA_VERSION_PROGRESS = [
-  { version: "v11",   date: "2023 Q1", milesPerIntervention: 5,    nines: 0.7 },
-  { version: "v12.3", date: "2024 Q2", milesPerIntervention: 80,   nines: 1.9 },
-  { version: "v12.5", date: "2024 Q3", milesPerIntervention: 183,  nines: 2.3 },
-  { version: "v13",   date: "2025 Q1", milesPerIntervention: 493,  nines: 2.7 },
-  { version: "v13.2", date: "2025 Q2", milesPerIntervention: 700,  nines: 2.8 },
-  { version: "v14",   date: "2025 Q4", milesPerIntervention: 1454, nines: 3.2 },
+  { version: "v11",   date: "2023 Q1", milesPerIntervention: 5 },
+  { version: "v12.3", date: "2024 Q2", milesPerIntervention: 80 },
+  { version: "v12.5", date: "2024 Q3", milesPerIntervention: 183 },
+  { version: "v13",   date: "2025 Q1", milesPerIntervention: 493 },
+  { version: "v13.2", date: "2025 Q2", milesPerIntervention: 700 },
+  { version: "v14",   date: "2025 Q4", milesPerIntervention: 1454 },
 ];
 
-// ============================================================
-// TESLA_FSD_SUPERVISED / TESLA_ROBOTAXI — side-by-side fact lists.
-//
-// Each row is { label, value, source? }. source is optional — many Robotaxi
-// rows are just facts derived from the same Fortune analysis (linked once at
-// the bottom of the card in the dashboard).
-// ============================================================
-
-export const TESLA_FSD_SUPERVISED = [
-  { label: "Wide release",             value: "v14.2 (59% of fleet)", source: { url: "https://www.notateslaapp.com/fsd-beta/", label: "NotATeslaApp" } },
-  { label: "Best crowdsourced rate",   value: "1,454 mi/int",    source: SOURCES.teslaTracker },
-  { label: "Independent test (AMCI)",  value: "13 mi/int",       source: SOURCES.electrekAmci },
-  { label: "Coast-to-coast record",    value: "2,732 mi, 0 int", source: SOURCES.teslarati },
-  { label: "Longest streak",           value: "12,961 mi",       source: SOURCES.notATeslaApp },
-  { label: "NHTSA investigation",      value: "2.88M vehicles",  source: SOURCES.openTools },
-  { label: "Requires",                 value: "Human driver",    source: null },
+export const TESLA_INDEPENDENT_TESTS = [
+  { version: "v12.5", date: "2024 Q3", milesPerIntervention: 13, tester: "AMCI", source: SOURCES.electrekAmci },
 ];
 
-export const TESLA_ROBOTAXI = [
-  { label: "Launched",             value: "June 2025" },
-  { label: "Unsupervised since",   value: "Jan 2026" },
-  { label: "Cities",               value: "Austin · Dallas · Houston · Miami", source: SOURCES.engadgetMiami },
-  { label: "Austin geofence",      value: "245 sq mi, ~20 cars",  source: SOURCES.techtimesAustin },
-  { label: "Fleet in Texas",       value: "~42 vs Waymo 577",     source: SOURCES.cnbcTexasFleet },
-  { label: "NHTSA incidents",      value: "17 (Jul 25–Mar 26)",   source: SOURCES.electrekUnredact },
-  { label: "Crash rate (Feb 26)",  value: "1 per ~57K mi",        source: SOURCES.fortune },
-  { label: "vs. human avg",        value: "~9x worse",            source: SOURCES.fortune },
-];
-
-// Tesla version-projection text (shown as an aside under the version chart).
-// If the per-version improvement rate changes, edit the multiplier and the
-// projected values together.
-export const TESLA_PROJECTION = {
-  multiplier: "~2.7×",
-  projections: "v15 → ~3,900 mi · v16 → ~10,500 mi · v17 → ~28,400 mi · v18 → ~76,700 mi · v19 → ~207,000 mi · v20 → ~560,000 mi",
-  caveat: "~6 more versions (~3 years) to reach the unsupervised threshold — if the rate holds. Historically, improvement rates slow at higher reliability.",
+export const TESLA_UNSUPERVISED_TARGET = {
+  miles: 670000,
+  label: "Unsupervised target",
+  source: SOURCES.electrekMusk, // Elluswamy's stated threshold
 };
+
+// ============================================================
+// TESLA CRASH RATE — Tesla's own "miles per major collision" figures
+// (airbag or restraint deployed, North America, trailing 12 months).
+// Company-reported; see caveats on the Tesla page.
+//
+// TESLA_SAFETY_RATIOS turns those into "how many times farther between
+// crashes" under different comparisons. Ratios derived from
+// TESLA_FSD_COLLISIONS are computed, so updating the raw miles is enough.
+// ============================================================
+
+export const TESLA_FSD_COLLISIONS = {
+  asOf: "Feb 2026",
+  fsd: 5300676,
+  manualActiveSafety: 2175763,
+  manualNoActiveSafety: 855132,
+  usAverage: 660164,
+  source: SOURCES.teslaFsdSafety,
+};
+
+const C = TESLA_FSD_COLLISIONS;
+const mi = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : Math.round(n / 1e3) + "K");
+
+// headline: true → drawn in the Tesla accent; others are like-for-like checks.
+// detail is the hover/focus text for each bar.
+export const TESLA_SAFETY_RATIOS = [
+  { label: "Tesla's headline",           sub: "FSD vs. US average",               ratio: C.fsd / C.usAverage,         headline: true, source: SOURCES.teslaFsdSafety,
+    detail: `${mi(C.fsd)} vs. ${mi(C.usAverage)} miles per major collision` },
+  { label: "Same crash definition",      sub: "Airbag crashes only, re-analyzed", ratio: 3, approx: true,                             source: SOURCES.reutersFsd,
+    detail: "Researcher's airbag-to-airbag comparison, via Reuters" },
+  { label: "Same cars, driven manually", sub: "FSD vs. Teslas with active safety", ratio: C.fsd / C.manualActiveSafety,               source: SOURCES.teslaFsdSafety,
+    detail: `${mi(C.fsd)} vs. ${mi(C.manualActiveSafety)} miles per major collision` },
+];
+
+// ============================================================
+// TESLA_ROBOTAXI_STATS — stat tiles for the unsupervised service.
+// Same { label, value, sublabel, source } shape as the *_STATS arrays.
+// ============================================================
+
+export const TESLA_ROBOTAXI_STATS = [
+  { label: "Unsupervised fleet", value: "~305", sublabel: "Sep 2026, up from 20 in May", source: SOURCES.robotaxiTracker },
+  { label: "Paid miles",         value: "2.4M", sublabel: "Cumulative, through Jun 2026", source: SOURCES.teslaQ2 },
+  { label: "Miles per crash",    value: "57K",  sublabel: "Humans: 529K",                source: SOURCES.fortune },
+];
 
 // ============================================================
 // MUSK_PREDICTIONS — track record of public claims vs. what shipped.
@@ -351,9 +366,9 @@ export const TESLA_PROJECTION = {
 export const MUSK_PREDICTIONS = [
   { year: "2015", claim: "Full autonomy by 2018",                  result: "Not achieved",                          source: SOURCES.electrekMusk },
   { year: "2016", claim: "LA to NY autonomous by end of 2017",     result: "Achieved Dec 2025 — 8 years late",      source: SOURCES.teslarati },
-  { year: "2019", claim: "1 million robotaxis by 2020",            result: "~42 in Texas as of May 2026",           source: SOURCES.cnbcTexasFleet },
+  { year: "2019", claim: "1 million robotaxis by 2020",            result: "~305 unsupervised, Sep 2026",           source: SOURCES.robotaxiTracker },
   { year: "2022", claim: "Robotaxi production in 2024",            result: "First Cybercab built Feb 2026",         source: SOURCES.techCrunch },
-  { year: "2025", claim: "Millions of robotaxis in H2 2025",       result: "~42 operating, mid-2026",               source: SOURCES.cnbcTexasFleet },
+  { year: "2025", claim: "Millions of robotaxis in H2 2025",       result: "~305 unsupervised, Sep 2026",           source: SOURCES.robotaxiTracker },
   { year: "2025", claim: "HW3 cars can do unsupervised FSD",       result: "Admitted upgrade needed",               source: SOURCES.techCrunch },
 ];
 

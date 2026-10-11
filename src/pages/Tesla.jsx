@@ -1,82 +1,129 @@
-// Tesla FSD — version progress, supervised vs. robotaxi, prediction track record.
+// Tesla FSD — one visual per question, each with its caveats underneath:
+// disengagement trend (crowdsourced vs. independent vs. target), crash rate
+// (Tesla's headline vs. like-for-like comparisons), robotaxi tiles, and the
+// prediction track record.
+import { Fragment } from "react";
 import {
-  TESLA_STATS, TESLA_VERSION_PROGRESS, TESLA_FSD_SUPERVISED,
-  TESLA_ROBOTAXI, TESLA_PROJECTION, MUSK_PREDICTIONS, SOURCES,
+  TESLA_VERSION_PROGRESS, TESLA_INDEPENDENT_TESTS, TESLA_UNSUPERVISED_TARGET,
+  TESLA_FSD_COLLISIONS, TESLA_SAFETY_RATIOS, TESLA_ROBOTAXI_STATS,
+  MUSK_PREDICTIONS, SOURCES,
 } from "../../data.js";
-import { MONO, CARD, useNarrow, Src, SourceLine, Note, StatCards, Section, HBarList } from "../ui.jsx";
+import { MONO, CARD, VIZ, Src, Caveats, StatCards, Section } from "../ui.jsx";
+import { Legend, DataTable } from "../charts/parts.jsx";
+import LogTrendChart from "../charts/LogTrendChart.jsx";
+import RatioBars from "../charts/RatioBars.jsx";
+
+// "2024 Q3" → 2024.625: the middle of the quarter as a decimal year.
+const quarterMid = (date) => {
+  const [year, q] = date.split(" Q").map(Number);
+  return year + (q - 0.5) / 4;
+};
+const miles = (n) => n.toLocaleString() + " mi";
+
+const latest = TESLA_VERSION_PROGRESS[TESLA_VERSION_PROGRESS.length - 1];
+
+const TREND_SERIES = [
+  {
+    id: "crowd", name: "Owner-reported", color: VIZ.accent, line: true,
+    points: TESLA_VERSION_PROGRESS.map((d) => ({
+      x: quarterMid(d.date), y: d.milesPerIntervention,
+      value: miles(d.milesPerIntervention), label: `${d.version} · ${d.date} · owner-reported`,
+      direct: d === latest ? { text: `${d.version} · ${d.milesPerIntervention.toLocaleString()}`, side: "left" } : null,
+    })),
+  },
+  {
+    id: "independent", name: "Independent test", color: VIZ.compare, line: false,
+    points: TESLA_INDEPENDENT_TESTS.map((d) => ({
+      x: quarterMid(d.date), y: d.milesPerIntervention,
+      value: miles(d.milesPerIntervention), label: `${d.version} · ${d.date} · ${d.tester} test`,
+      direct: { text: `${d.tester} · ${d.milesPerIntervention}`, side: "right" },
+    })),
+  },
+];
+
+const TREND_TABLE = [
+  ...TESLA_VERSION_PROGRESS.map((d) => ({ who: "Owners", version: d.version, date: d.date, miles: d.milesPerIntervention.toLocaleString() })),
+  ...TESLA_INDEPENDENT_TESTS.map((d) => ({ who: d.tester, version: d.version, date: d.date, miles: d.milesPerIntervention.toLocaleString() })),
+  { who: "Target", version: "—", date: "—", miles: TESLA_UNSUPERVISED_TARGET.miles.toLocaleString() },
+];
+
+const RATIO_ROWS = TESLA_SAFETY_RATIOS.map((r) => ({
+  ...r,
+  display: r.approx ? `~${Math.round(r.ratio)}×` : `${r.ratio.toFixed(1)}×`,
+  color: r.headline ? VIZ.accent : VIZ.compare,
+}));
+
+const C = TESLA_FSD_COLLISIONS;
+const COLLISION_TABLE = [
+  { mode: "FSD (Supervised)",          miles: C.fsd },
+  { mode: "Manual, active safety on",  miles: C.manualActiveSafety },
+  { mode: "Manual, active safety off", miles: C.manualNoActiveSafety },
+  { mode: "US average",                miles: C.usAverage },
+].map((r) => ({ ...r, miles: r.miles.toLocaleString() }));
+
+const panel = { ...CARD, padding: "18px 20px 14px" };
 
 export default function Tesla() {
-  const narrow = useNarrow();
-  const max = TESLA_VERSION_PROGRESS.reduce((m, d) => Math.max(m, d.milesPerIntervention), 0);
-  const versionRows = TESLA_VERSION_PROGRESS.map((d, i) => ({
-    label: d.version,
-    sub: d.date,
-    display: d.milesPerIntervention.toLocaleString(),
-    pct: (d.milesPerIntervention / max) * 100,
-    color: "hsl(" + (35 + i * 8) + ", 90%, " + (50 + i * 4) + "%)",
-  }));
-
   return (
     <div>
-      <StatCards stats={TESLA_STATS} />
+      <Section title="Disengagements" subtitle="Miles between critical takeovers on supervised FSD. Log scale.">
+        <div style={panel}>
+          <Legend items={TREND_SERIES.map((s) => ({ label: s.name, color: s.color }))} />
+          <LogTrendChart
+            series={TREND_SERIES}
+            target={{ y: TESLA_UNSUPERVISED_TARGET.miles, label: TESLA_UNSUPERVISED_TARGET.label }}
+            xDomain={[2023, 2026]}
+            xTicks={[2023, 2024, 2025].map((y) => ({ x: y + 0.5, label: String(y) }))}
+            yDomain={[1, 1e6]}
+            ariaLabel="Tesla FSD miles per critical disengagement by version, log scale, versus the unsupervised target"
+          />
+          <DataTable
+            columns={[{ key: "who", label: "Source" }, { key: "version", label: "Version" }, { key: "date", label: "Quarter" }, { key: "miles", label: "Miles", right: true }]}
+            rows={TREND_TABLE}
+          />
+        </div>
+        <Caveats items={[
+          { text: "Owner-reported; skews optimistic.", source: SOURCES.teslaTracker },
+          { text: "Tesla collects this metric but doesn't publish it. No data yet for v14.3 or v15.", source: SOURCES.electrekFeedback },
+          { text: "Tesla's “25,000 miles without touching the wheel” is one owner's streak, not a fleet rate.", source: SOURCES.streak25k },
+          { text: "Target: Tesla AI chief's stated bar for unsupervised.", source: TESLA_UNSUPERVISED_TARGET.source },
+        ]} />
+      </Section>
 
-      <Section title="Version-over-version improvement" subtitle="Miles between critical disengagements, crowdsourced.">
-        <HBarList rows={versionRows} />
-        <SourceLine>Source: <Src href={SOURCES.teslaTracker.url}>teslafsdtracker.com</Src> (crowdsourced)</SourceLine>
-        <Note>
-          Crowdsourced data skews optimistic — enthusiast drivers in favorable conditions.
-          Independent testing by <Src href={SOURCES.electrekAmci.url}>AMCI</Src> on
-          standardized routes found just 13 miles between interventions on v12.5.
-        </Note>
-        <div style={{ marginTop: "16px", padding: "16px 20px", background: "rgba(251,191,35,0.05)", border: "1px solid rgba(251,191,35,0.12)", borderRadius: "8px" }}>
-          <div style={{ fontSize: "12px", color: "#e2e8f0", lineHeight: 1.7 }}>
-            <strong style={{ color: "#fbbf24" }}>If Tesla maintains {TESLA_PROJECTION.multiplier} improvement per version:</strong>
-            <br />{TESLA_PROJECTION.projections}
-            <br /><span style={{ color: "#64748b" }}>{TESLA_PROJECTION.caveat}</span>
-          </div>
+      <Section title="Crash rate" subtitle="How much safer FSD looks depends on the comparison.">
+        <div style={panel}>
+          <RatioBars rows={RATIO_ROWS} />
+          <DataTable
+            columns={[{ key: "mode", label: `Miles per major collision, 12 mo. to ${C.asOf}` }, { key: "miles", label: "Miles", right: true }]}
+            rows={COLLISION_TABLE}
+          />
+        </div>
+        <Caveats items={[
+          { text: "Tesla-reported, not independently audited.", source: C.source },
+          { text: "10 of 11 safety researchers who reviewed the method for Reuters called it misleading; Tesla's fleet is also newer than average.", source: SOURCES.reutersFsd },
+        ]} />
+      </Section>
+
+      <Section title="Robotaxi" subtitle="Unsupervised service.">
+        <StatCards stats={TESLA_ROBOTAXI_STATS.map((s) => ({ ...s, accent: VIZ.text }))} />
+        <div style={{ marginTop: "-16px" }}>
+          <Caveats items={[
+            { text: "Fleet counts are crowdsourced sightings; Tesla publishes none.", source: SOURCES.robotaxiTracker },
+            { text: "Crash rate uses data through Jan 2026, mostly with safety monitors aboard; no newer rate has been published.", source: SOURCES.fortune },
+          ]} />
         </div>
       </Section>
 
-      <Section title="Supervised FSD vs. Robotaxi" subtitle="Two different products with different safety records.">
-        <div style={{ display: "grid", gridTemplateColumns: narrow ? "1fr" : "1fr 1fr", gap: "14px" }}>
-          <div style={{ ...CARD, padding: "18px" }}>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "#fbbf24", marginBottom: "12px" }}>FSD Supervised (consumer)</div>
-            {TESLA_FSD_SUPERVISED.map((row, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.025)", fontSize: "11px" }}>
-                <span style={{ color: "#64748b" }}>{row.label} {row.source && <Src href={row.source.url}>{row.source.label}</Src>}</span>
-                <span style={{ color: "#cbd5e1", fontFamily: MONO }}>{row.value}</span>
+      <Section title="Predictions vs. reality">
+        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: "12px 14px", marginTop: "16px" }}>
+          {MUSK_PREDICTIONS.map((p, i) => (
+            <Fragment key={i}>
+              <div style={{ fontFamily: MONO, fontSize: "11px", color: VIZ.muted, paddingTop: "1px" }}>{p.year}</div>
+              <div>
+                <div style={{ fontSize: "12px", color: VIZ.text }}>{p.claim}</div>
+                <div style={{ fontSize: "11px", color: VIZ.secondary, marginTop: "2px" }}>{p.result} <Src href={p.source.url}>{p.source.label}</Src></div>
               </div>
-            ))}
-          </div>
-          <div style={{ ...CARD, border: "1px solid rgba(239,68,68,0.12)", padding: "18px" }}>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "#ef4444", marginBottom: "12px" }}>Robotaxi (unsupervised)</div>
-            {TESLA_ROBOTAXI.map((row, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.025)", fontSize: "11px" }}>
-                <span style={{ color: "#64748b", whiteSpace: "nowrap" }}>{row.label} {row.source && <Src href={row.source.url}>{row.source.label}</Src>}</span>
-                <span style={{ color: "#fca5a5", fontFamily: MONO, textAlign: "right" }}>{row.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <Note>
-          Tesla fully redacted robotaxi crash details from NHTSA filings until <Src href={SOURCES.electrekUnredact.url}>May 2026</Src>; narratives are now public.
-          Tesla's quarterly <Src href={SOURCES.teslaSafety.url}>Vehicle Safety Reports</Src> count only high-severity events, predominantly on highways.
-          The <Src href={SOURCES.iihs.url}>IIHS</Src>: little evidence that partial automation has safety benefits.
-        </Note>
-      </Section>
-
-      <Section title="Musk timeline predictions" subtitle="Claims vs. reality.">
-        <div>
-          {MUSK_PREDICTIONS.map((item, i) => (
-            <div key={i} style={{ display: "flex", gap: "14px", padding: "10px 0 10px 14px", borderLeft: "2px solid rgba(239,68,68,0.25)" }}>
-              <div style={{ fontSize: "11px", color: "#f59e0b", fontFamily: MONO, minWidth: "42px", fontWeight: 600 }}>{item.year}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "12px", color: "#cbd5e1" }}>{item.claim}</div>
-                <div style={{ fontSize: "11px", color: "#ef4444", marginTop: "2px" }}>
-                  {"❌"} {item.result} <Src href={item.source.url}>{item.source.label}</Src>
-                </div>
-              </div>
-            </div>
+            </Fragment>
           ))}
         </div>
       </Section>
