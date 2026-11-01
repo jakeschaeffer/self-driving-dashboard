@@ -1,0 +1,32 @@
+/* Our additions on top of BoardUI's styles (theme.css, typography.css and
+ * globals.css are BoardUI's own files; leave them as shipped so they can be
+ * updated by copying in a newer version).
+ *
+ * This file only does two things:
+ *   1. Points BoardUI's font variables at the Google Fonts loaded in index.html
+ *      (BoardUI expects Next.js to provide them).
+ *   2. Adds three semantic colors for the data series, one per lane. Components
+ *      use them as Tailwind classes (bg-series-tesla, text-series-waymo…), the
+ *      same way BoardUI's own components use chart-1…chart-9.
+ */
+@import "./globals.css";
+
+:root {
+  --font-inter: "Inter";
+  --font-mono-source: "JetBrains Mono";
+}
+
+@theme {
+  --color-series-tesla: var(--color-orange-500);
+  --color-series-waymo: var(--color-blue-500);
+  --color-series-human: var(--color-neutral-400);
+  --color-series-tesla-soft: var(--color-orange-100);
+}
+
+/* Dark mode flips the tokens, never the components (BoardUI's rule). */
+.dark {
+  --color-series-tesla: var(--color-orange-400);
+  --color-series-waymo: var(--color-blue-400);
+  --color-series-human: var(--color-neutral-500);
+  --color-series-tesla-soft: color-mix(in srgb, var(--color-orange-950) 60%, transparent);
+}

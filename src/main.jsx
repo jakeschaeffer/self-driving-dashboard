@@ -1,15 +1,15 @@
-// Entry point: load the global styles, restore the saved theme, mount the app.
+// Entry point: load the styles, mount the app.
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./styles/tokens.css";
-import "./styles/base.css";
-import { loadSavedTheme } from "./lib/hooks.js";
+import { DirectionProvider } from "@/components/foundations/direction/direction";
+import "./styles/site.css"; // imports BoardUI's globals.css, which pulls in Tailwind + tokens
 import App from "./App.jsx";
-
-loadSavedTheme();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
+    {/* BoardUI's React Aria components read locale and direction from this provider. */}
+    <DirectionProvider locale="en-US">
+      <App />
+    </DirectionProvider>
   </StrictMode>,
 );

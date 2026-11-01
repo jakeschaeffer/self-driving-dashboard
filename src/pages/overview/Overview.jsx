@@ -2,10 +2,10 @@
 import { SAFETY_POINTS, HOME_STATS, SOURCES } from "../../../data.js";
 import { fullMiles } from "../../lib/format.js";
 import { compareToHuman } from "../../lib/compare.js";
-import Section from "../../components/Section.jsx";
-import StatStrip from "../../components/StatStrip.jsx";
-import Note from "../../components/Note.jsx";
-import SourceTag from "../../components/SourceTag.jsx";
+import Section from "../../components/site/Section.jsx";
+import KpiCards from "../../components/site/KpiCards.jsx";
+import Callout from "../../components/site/Callout.jsx";
+import SourceTag from "../../components/site/SourceTag.jsx";
 import RoadChart from "./RoadChart.jsx";
 import PointsTable from "./PointsTable.jsx";
 import CrashMatrix from "./CrashMatrix.jsx";
@@ -31,7 +31,7 @@ function Verdict() {
 export default function Overview() {
   return (
     <>
-      <StatStrip stats={HOME_STATS} />
+      <KpiCards stats={HOME_STATS} />
 
       <Section
         eyebrow="Miles between events · log scale"
@@ -45,14 +45,14 @@ export default function Overview() {
       <Section
         eyebrow="Miles between events · higher is safer"
         title="Like for like"
-        subtitle="The same kind of event, measured the same way. ▲ beats the human rate, ▼ falls short."
+        subtitle="The same kind of event, measured the same way. Green ▲ beats the human rate, red ▼ falls short."
       >
         <CrashMatrix />
-        <Note>
+        <Callout>
           Disengagements and crashes are different things: a disengagement is a human taking over,
           and most would not have ended in a crash. Human crash data also misses about 60% of minor
           incidents (<SourceTag source={SOURCES.nhtsa} />), while AVs report nearly every contact event.
-        </Note>
+        </Callout>
       </Section>
     </>
   );
