@@ -2,21 +2,29 @@
 
 The data this site shows lives in **`data.js`**. The dashboard imports from there and renders it. If you want to change a number, add a row, or swap a citation, that's the only file you need to touch — no JSX edits required for routine updates.
 
-The UI lives in `src/` (no charting library; every chart is hand-built):
+The UI lives in `src/` and is built from [BoardUI](https://github.com/BoardUI/boardui) components (React Aria + Tailwind CSS v4), with charts drawn in Recharts:
 
 ```
 src/
-  main.jsx            entry point: loads global CSS, mounts <App/>
+  main.jsx            entry point: loads styles/site.css, mounts <App/>
   App.jsx             shell: header, current page, footer (hash routing: #waymo, #tesla…)
-  styles/tokens.css   design tokens: every color and font, light + dark themes
-  styles/base.css     plain-HTML defaults (body, headings, focus ring)
-  lib/                plain helpers: number formatting, comparisons, React hooks
-  components/         building blocks shared by several pages (Section, StatStrip,
-                      SourceTag, Note, Pill, FactSheet, header/footer, tables)
+  styles/
+    theme.css         BoardUI: color tokens, light + dark (dark = .dark class on <html>)
+    typography.css    BoardUI: the type scale (text-title-1-medium, text-body-regular…)
+    globals.css       BoardUI: Tailwind entry, base resets, table styles
+    site.css          ours: fonts and the three series colors (Tesla, Waymo, human)
+  components/
+    base/ application/ foundations/
+                      BoardUI source, copied in unchanged (chip, table, tooltip,
+                      pill tabs, theme toggle…). Don't edit; copy in newer versions.
+    site/             ours, assembled from BoardUI: Card, Section, KpiCards,
+                      SourceTag, Callout, StatusChip, FactSheet, header/footer
+  utils/cx.ts, hooks/ BoardUI helpers (class merging, count-up numbers)
+  lib/                our plain helpers: number formatting, comparisons, React hooks
   pages/<page>/       one folder per tab: the page plus the charts only it uses
 ```
 
-Every component has a sibling `*.module.css` file (a **CSS Module**: Vite scopes its class names to that one component, so styles can't leak between pages). Components never write raw colors; they use the tokens in `styles/tokens.css`, which is how light/dark mode works.
+Styling uses Tailwind utility classes right in the JSX (`className="rounded-2xl p-4"`). Components never write raw colors: they use BoardUI's semantic classes (`text-text-secondary`, `bg-background-secondary-default`, `bg-chart-track`) or our series colors (`bg-series-tesla`), which is how light/dark mode works. Imports starting with `@/` point at `src/` (set in `vite.config.js`).
 
 This doc covers:
 1. [What's in `data.js`](#whats-in-datajs) — every export and what it powers
@@ -40,7 +48,7 @@ Each entry has `{ url, label, type }`, where `type` is one of:
 - `crowdsource` — community trackers like teslafsdtracker.com
 - `press` — journalism, analyst reports, industry forecasts
 
-`type` is rendered as a small trust-tier tag next to every source link (GOV, PEER, SELF, CROWD, PRESS; see `src/components/SourceTag.jsx`), and the footer explains the tags. Give every source a `type`, inline ones included. See [Source-quality conventions](#source-quality-conventions).
+`type` is rendered as a small trust-tier tag next to every source link (GOV, PEER, SELF, CROWD, PRESS; see `src/components/site/SourceTag.jsx`), and the footer explains the tags. Give every source a `type`, inline ones included. See [Source-quality conventions](#source-quality-conventions).
 
 ### `SITE`
 - `lastUpdated`: shown in the header and footer. Bump whenever data changes.
@@ -98,6 +106,9 @@ Version-over-version improvement, `{ version, date: "YYYY-MM", milesPerIntervent
 ### `TESLA_FSD_SUPERVISED` / `TESLA_ROBOTAXI`
 Side-by-side fact lists. Each row is `{ label, value, source? }` — sources render inline next to the label.
 
+### `TESLA_FSD_COLLISIONS` / `TESLA_SAFETY_RATIOS`
+The "How much safer?" bars on the Tesla page. `TESLA_FSD_COLLISIONS` holds Tesla's own miles per major collision, all from one report snapshot (`asOf`) so the numbers cover the same period; don't mix in a newer value for just one of them. Each `TESLA_SAFETY_RATIOS` row is `{ label, sub, ratio, headline?, approx?, detail, source }`; ratios from the raw miles are computed, so updating `TESLA_FSD_COLLISIONS` is enough.
+
 ### `MUSK_PREDICTIONS`
 Track record of public claims vs. what shipped: `{ said, due, done, claim, result, source }`. `said`/`due`/`done` are years; `done` is `null` if it still hasn't happened. The Tesla page draws each as a timeline: promise window, then the overdue stretch.
 
@@ -111,7 +122,7 @@ Non-technical blockers. `status` is `"achieved" | "partial" | "blocked"` and dri
 Consensus dates from McKinsey/S&P/WEF/BCG. `year` is a string so it can be `"Now"`, `"~2028"`, `"2040s–60s"`, etc. `tone` is `"good" | "neutral" | "caution" | "far"`; the theme picks its color.
 
 ### `OTHERS_STATS` / `OTHER_PLAYERS`
-The Others page. `OTHER_PLAYERS` rows are `{ company, status, scale, detail, source }` where `status` is `"driverless" | "supervised" | "testing" | "dead"` (the page groups companies by it) and `scale` is whatever headline number that company discloses — rides, fleet size, or miles. They are intentionally NOT comparable across companies; the Note on the page says so.
+The Others page. `OTHER_PLAYERS` rows are `{ company, status, scale, detail, source }` where `status` is `"driverless" | "supervised" | "testing" | "dead"` (the page groups companies by it) and `scale` is whatever headline number that company discloses — rides, fleet size, or miles. They are intentionally NOT comparable across companies; the Callout on the page says so.
 
 ### `CHILD_SAFETY`
 The single paragraph at the bottom of the Steeringless page. Mostly prose, but the canonical numbers (parent-attitude percentages, threshold miles) live here so they're easy to update.
@@ -127,11 +138,11 @@ The site mixes data from places with very different bars for "true." Be explicit
 
 - **Regulator data** (NHTSA, CA DMV) — most authoritative. Use as the human baseline whenever possible. NHTSA's all-crash rate (529K mi/event) is *the* anchor for the hero chart.
 - **Peer-reviewed academic** (Kusano et al. 2025, RAND, IIHS) — second most authoritative. Use when a regulator number doesn't exist for the metric.
-- **Company self-reported** (Waymo Safety Impact, Tesla Vehicle Safety Reports) — the company controls the methodology and what's counted. Note this in the `Note` blocks. Tesla in particular redacts crash details in NHTSA filings — flag that.
-- **Crowdsourced** (teslafsdtracker.com) — biased optimistic. Add a `Note` saying so. The Tesla page explicitly contrasts crowdsourced (~1,454 mi) with independent AMCI testing (13 mi) on the same FSD version.
+- **Company self-reported** (Waymo Safety Impact, Tesla Vehicle Safety Reports) — the company controls the methodology and what's counted. Note this in the `Callout` blocks. Tesla in particular redacts crash details in NHTSA filings — flag that.
+- **Crowdsourced** (teslafsdtracker.com) — biased optimistic. Add a `Callout` saying so. The Tesla page explicitly contrasts crowdsourced (~1,454 mi) with independent AMCI testing (13 mi) on the same FSD version.
 - **Press / analyst** — useful for forecasts and event tracking, not for headline safety numbers.
 
-When you're adding a row, ask: would I want my reader to see this number with the original source label visible? If the answer is "no, it needs context," prefer adding a `Note` block under the section in the dashboard alongside the data update.
+When you're adding a row, ask: would I want my reader to see this number with the original source label visible? If the answer is "no, it needs context," prefer adding a `Callout` block under the section in the dashboard alongside the data update.
 
 ---
 
@@ -154,11 +165,11 @@ For a data point we haven't tracked before (e.g. a Cruise number, or a new Waymo
 
 ### Adding a row from a regulator report (e.g. NHTSA bulletin)
 - Add to `SOURCES` with `type: "regulator"` if not already there.
-- The `Note` block conventions on the Comparison and Waymo pages already explain that AV crash data is reported more completely than human data — re-use that framing rather than restating it on the new row.
+- The `Callout` block conventions on the Comparison and Waymo pages already explain that AV crash data is reported more completely than human data — re-use that framing rather than restating it on the new row.
 
 ### Adding a row from a self-reported company release
 - Same as above but with `type: "company"`.
-- If the methodology is unusual (e.g. only counts high-severity crashes, only highway miles), add a sentence to the relevant `Note` block in the dashboard.
+- If the methodology is unusual (e.g. only counts high-severity crashes, only highway miles), add a sentence to the relevant `Callout` block in the dashboard.
 
 ### Adding a row from a crowdsourced tracker
 - Same as above but with `type: "crowdsource"`.
@@ -193,7 +204,7 @@ The dashboard does NOT enforce any particular shape; the structured data file is
 
 ### When NOT to add data
 - **Numbers without a source.** Always include a citation, even if it's a press article that summarizes the underlying study.
-- **Numbers that need a long explanation to be honest.** Either include the explanation as a `Note` block, or don't add the number.
+- **Numbers that need a long explanation to be honest.** Either include the explanation as a `Callout` block, or don't add the number.
 - **Cross-system claims of "X is N× safer than Y" where the metrics aren't comparable.** This is the whole reason `event` is on every row of `SAFETY_POINTS`: disengagements aren't crashes aren't fatalities. `compareToHuman()` in `src/lib/compare.js` compares each row with the human rate for the same event, and marks disengagement comparisons as approximate.
 
 ---
@@ -202,8 +213,8 @@ The dashboard does NOT enforce any particular shape; the structured data file is
 
 Some content lives in the JSX, not `data.js`, because it's prose-shaped rather than data-shaped:
 
-- **The Note blocks** under each section. They explain methodology and caveats; they're tied to specific UI placement.
+- **The Callout blocks** under each section. They explain methodology and caveats; they're tied to specific UI placement.
 - **The verdict sentence** on the Overview page is computed from `SAFETY_POINTS`, so it updates itself.
-- **Section titles and subtitles** for the in-page `<Section>` blocks. Page-level titles are in `PAGES` in data.js; section-level subtitles are still inline in `src/pages/*.jsx`.
+- **Section titles and subtitles** for the in-page `<Section>` blocks. Page-level titles are in `PAGES` in data.js; section-level subtitles are still inline in `src/pages/<page>/*.jsx`.
 
 If you're updating a key Overview number (Tesla FSD best, human baseline, gap multiplier), also check `HOME_STATS` and `TESLA_STATS`, whose values are hand-written strings.

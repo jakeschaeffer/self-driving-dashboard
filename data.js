@@ -94,6 +94,8 @@ export const SOURCES = {
   // 2026 updates (Sep 2026 research pass) — Tesla
   teslaQ2:         { url: "https://assets-ir.tesla.com/tesla-contents/IR/TSLA-Q2-2026-Update.pdf", label: "Tesla Q2 2026", type: "company" },
   teslaFsdSafety:  { url: "https://www.tesla.com/fsd/safety", label: "Tesla FSD safety report", type: "company" },
+  robotaxiTracker: { url: "https://eletric-vehicles.com/tesla/tesla-robotaxi-fleet-tops-1000-vehicles-tracking-site-shows/", label: "Robotaxi Tracker", type: "crowdsource" },
+  reutersFsd:      { url: "https://electrek.co/2026/05/28/tesla-fsd-safety-stats-misleading-reuters-investigation/", label: "Reuters, via Electrek", type: "press" },
   electrek1MUnsup: { url: "https://electrek.co/2026/09/03/tesla-announces-1-million-unsupervised-miles-driven-by-robotaxi/", label: "Electrek", type: "press" },
   teslaOracleFleet:{ url: "https://www.teslaoracle.com/2026/09/26/tesla-robotaxi-and-cybercab-fleet-in-texas-surpasses-the-500-mark-420-126/", label: "Tesla Oracle", type: "press" },
   teslaOracleFsd:  { url: "https://www.teslaoracle.com/2026/09/12/tesla-rolls-out-fsd-v14-3-9-2026-27-6-with-automatic-collision-evasion-feature-details-and-official-release-notes/", label: "Tesla Oracle", type: "press" },
@@ -217,7 +219,7 @@ export const SAFETY_POINTS = [
   { id: "tesla-robotaxi",  miles: 57000,    label: "Tesla Robotaxi",   short: "Robotaxi",       sublabel: "Crash rate with safety monitor, Jul 2025–Jan 2026", event: "crash",          category: "tesla", source: SOURCES.fortune },
   { id: "waymo-testing",   miles: 29000,    label: "Waymo (testing)",  short: "Testing",        sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", source: SOURCES.caDmv },
   { id: "waymo-injury",    miles: 1350000,  label: "Waymo",            short: "Injury",         sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", source: SOURCES.kusano2025 },
-  { id: "waymo-serious",   miles: 100000000, label: "Waymo",           short: "Serious injury", sublabel: "Serious-injury crash rate, ~0.01 per million mi (2026)", event: "serious injury", category: "waymo", source: SOURCES.waymoSafety },
+  { id: "waymo-serious",   miles: 90000000,  label: "Waymo",           short: "Serious injury", sublabel: "~3 serious-injury crashes in 271M mi (through Jun 2026)", event: "serious injury", category: "waymo", source: SOURCES.waymoSafety },
   { id: "human-injury",    miles: 252000,   label: "Human drivers",    short: "Injury",         sublabel: "Injury crash rate",           event: "injury crash",   category: "human", source: SOURCES.kusano2025 },
   { id: "human-crash",     miles: 529000,   label: "Human drivers",    short: "All crashes",    sublabel: "All police-reported crashes", event: "crash",          category: "human", source: SOURCES.nhtsa },
   { id: "human-serious",   miles: 4800000,  label: "Human drivers",    short: "Serious injury", sublabel: "Serious-injury crash rate, 0.21 per million mi (Waymo's benchmark)", event: "serious injury", category: "human", source: SOURCES.waymoSafety },
@@ -243,7 +245,7 @@ export const HUMAN_BENCHMARKS = Object.fromEntries(
 // ============================================================
 
 export const HOME_STATS = [
-  { label: "Waymo best",                   value: "~100M mi", sublabel: "per serious-injury crash",       series: "waymo", source: SOURCES.waymoSafety },
+  { label: "Waymo best",                   value: "~90M mi",  sublabel: "per serious-injury crash",       series: "waymo", source: SOURCES.waymoSafety },
   { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement",     series: "tesla", source: SOURCES.teslaTracker },
   { label: "Human baseline",               value: "529K mi",  sublabel: "per police-reported crash",      series: "human", source: SOURCES.nhtsa },
   { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "vs. Elluswamy 670K mi target", source: SOURCES.electrekMusk },
@@ -282,7 +284,7 @@ export const CRASH_RATES_FOOTNOTE = {
 export const CRASH_RATES = [
   { metric: "Police-reported crash", human: "529K", waymo: "~476K",         tesla: "~57K",     waymoGood: false, teslaGood: false, source: SOURCES.nhtsa },
   { metric: "Injury crash",          human: "252K", waymo: "1.35M",         tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.kusano2025 },
-  { metric: "Serious injury crash",  human: "~4.8M", waymo: "~100M",       tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.waymoSafety },
+  { metric: "Serious injury crash",  human: "~4.8M", waymo: "~90M",        tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.waymoSafety },
   { metric: "Fatal crash",           human: "86M",  waymo: "0 at fault*",   tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.nhtsa },
 ];
 
@@ -386,8 +388,41 @@ export const TESLA_ROBOTAXI = [
   { label: "Unsupervised miles",       value: "1M+ (Sep 3)",           source: SOURCES.electrek1MUnsup },
   { label: "Registered in Texas",      value: "546 (126 Cybercabs)",   source: SOURCES.teslaOracleFleet },
   { label: "NHTSA crash reports",      value: "21+ (to Jul 2026)",     source: SOURCES.electrekHouston },
+  { label: "Unsupervised fleet, tracked", value: "~305 (Sep 14)",    source: SOURCES.robotaxiTracker },
+  { label: "Paid robotaxi miles",      value: "~2.4M (to Jun 2026)",   source: SOURCES.teslaQ2 },
   { label: "Crash rate, with monitor", value: "1 per ~57K mi",         source: SOURCES.fortune },
   { label: "Cybercab",                 value: "Paid rides; NHTSA order", source: SOURCES.electrekCybercabNhtsa },
+];
+
+// ============================================================
+// TESLA CRASH RATE — "how much safer is FSD?" depends on the comparison.
+//
+// TESLA_FSD_COLLISIONS: Tesla's own miles per major collision (airbag or
+//   restraint deployed, North America, trailing 12 months), one snapshot so
+//   every number covers the same period. Company-reported.
+// TESLA_SAFETY_RATIOS: each bar is "FSD goes N× farther between crashes than
+//   <comparison>". Ratios from TESLA_FSD_COLLISIONS are computed, so
+//   updating the raw miles is enough. 1× would mean no safer.
+// ============================================================
+
+export const TESLA_FSD_COLLISIONS = {
+  asOf: "Feb 2026",
+  fsd: 5300676,
+  manualActiveSafety: 2175763,
+  usAverage: 660164,
+  source: SOURCES.teslaFsdSafety,
+};
+
+export const TESLA_SAFETY_RATIOS = [
+  { label: "Tesla's headline", sub: "FSD vs. Tesla's estimate of the US average",
+    ratio: TESLA_FSD_COLLISIONS.fsd / TESLA_FSD_COLLISIONS.usAverage, headline: true,
+    detail: "Airbag crashes for Teslas against all tow-away crashes for everyone", source: SOURCES.teslaFsdSafety },
+  { label: "Same crash definition", sub: "Airbag crashes on both sides, re-analyzed",
+    ratio: 3, approx: true,
+    detail: "University of Michigan re-analysis for Reuters", source: SOURCES.reutersFsd },
+  { label: "Same cars, driven manually", sub: "FSD vs. Teslas with active safety features",
+    ratio: TESLA_FSD_COLLISIONS.fsd / TESLA_FSD_COLLISIONS.manualActiveSafety,
+    detail: "Tesla's own fleet, same telemetry; still favors FSD's easier roads", source: SOURCES.teslaFsdSafety },
 ];
 
 // Independent (non-crowdsourced) tests, drawn as hollow markers on the
@@ -485,7 +520,7 @@ export const CHILD_SAFETY = {
   parentsComfortableDriving: "63%",
   parentsLetChildRideAlone: "21%",
   impliedCrashThreshold: "roughly 1 crash per 10M+ miles",
-  waymoSeriousInjuryRate: "about one per 100 million miles",
+  waymoSeriousInjuryRate: "about one per 90 million miles",
   waymoCrashRate: "about one per 476K miles",
   source: SOURCES.chop,
 };

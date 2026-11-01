@@ -13,6 +13,7 @@ import Disclosure from "../../components/site/Disclosure.jsx";
 import Card from "../../components/site/Card.jsx";
 import VersionTrend from "./VersionTrend.jsx";
 import PromiseTimeline from "./PromiseTimeline.jsx";
+import CrashRatioBars from "./CrashRatioBars.jsx";
 
 export default function Tesla() {
   return (
@@ -51,6 +52,22 @@ export default function Tesla() {
           then v14.2 fell back, with city miles dropping from 4,109 to 809 (<SourceTag source={SOURCES.benzingaGlj} />).
           No stable average for v14.3 has been published. Independent testing found just 13 miles between
           interventions on v12.5 (<SourceTag source={SOURCES.electrekAmci} />).
+        </Callout>
+      </Section>
+
+      <Section
+        eyebrow="Miles between major collisions · FSD vs. a comparison group"
+        title="How much safer? It depends who you compare with"
+        subtitle="Tesla says FSD goes 8× farther between crashes than the average driver. Matching the crash definition, or the cars, shrinks that to about 2–3×."
+      >
+        <CrashRatioBars />
+        <Callout>
+          Every figure here is Tesla-reported and not independently audited. Ten of eleven safety researchers who
+          reviewed the method for Reuters called it misleading (<SourceTag source={SOURCES.reutersFsd} />). Even the
+          fairest bar favors FSD: drivers switch it on in easier conditions, and Tesla's fleet averages about 4 years
+          old against about 13 for US cars overall.
+          Tesla's live report now claims 9× (<SourceTag source={SOURCES.teslaFsdSafety} />) without publishing matching
+          like-for-like figures.
         </Callout>
       </Section>
 
