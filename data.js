@@ -85,7 +85,9 @@ export const SOURCES = {
 
   // Oct 2026 research pass (Tesla)
   teslaFsdSafety:  { url: "https://www.tesla.com/fsd/safety", label: "Tesla", type: "company" },
-  teslaQ2:         { url: "https://evwire.com/p/tesla-q2-2026-earnings-results", label: "Tesla Q2 2026", type: "company" },
+  teslaRobotaxiSafety:{ url: "https://www.tesla.com/robotaxi/safety", label: "Tesla", type: "company" },
+  teslaV15Notes:   { url: "https://www.notateslaapp.com/software-updates/version/2026.38.6.11/release-notes", label: "v15 release notes", type: "company" },
+  electrekSgoNov:  { url: "https://electrek.co/2026/11/16/tesla-cybercab-crashes-speed-problem/", label: "Electrek", type: "press" },
   robotaxiTracker: { url: "https://eletric-vehicles.com/tesla/tesla-robotaxi-fleet-tops-1000-vehicles-tracking-site-shows/", label: "Robotaxi Tracker", type: "crowdsource" },
   reutersFsd:      { url: "https://electrek.co/2026/05/28/tesla-fsd-safety-stats-misleading-reuters-investigation/", label: "Reuters", type: "press" },
   electrekFeedback:{ url: "https://electrek.co/2026/05/14/tesla-forces-fsd-intervention-feedback-mandatory/", label: "Electrek", type: "press" },
@@ -97,7 +99,7 @@ export const SOURCES = {
 // ============================================================
 
 export const SITE = {
-  lastUpdated: "Oct 2026", // shown in the header. Update whenever data changes.
+  lastUpdated: "Nov 2026", // shown in the header. Update whenever data changes.
 };
 
 // ============================================================
@@ -325,10 +327,10 @@ export const TESLA_UNSUPERVISED_TARGET = {
 // ============================================================
 
 export const TESLA_FSD_COLLISIONS = {
-  asOf: "Feb 2026",
-  fsd: 5300676,
-  manualActiveSafety: 2175763,
-  manualNoActiveSafety: 855132,
+  asOf: "Oct 2026",
+  fsd: 6006200,
+  manualActiveSafety: 2031221,
+  manualNoActiveSafety: 845915,
   usAverage: 660164,
   source: SOURCES.teslaFsdSafety,
 };
@@ -353,9 +355,9 @@ export const TESLA_SAFETY_RATIOS = [
 // ============================================================
 
 export const TESLA_ROBOTAXI_STATS = [
-  { label: "Unsupervised fleet", value: "~305", sublabel: "Sep 2026, up from 20 in May", source: SOURCES.robotaxiTracker },
-  { label: "Paid miles",         value: "2.4M", sublabel: "Cumulative, through Jun 2026", source: SOURCES.teslaQ2 },
-  { label: "Miles per crash",    value: "57K",  sublabel: "Humans: 529K",                source: SOURCES.fortune },
+  { label: "Driverless miles",  value: "3.1M", sublabel: "No safety monitor, Jan 22 – Oct 18, 2026", source: SOURCES.teslaRobotaxiSafety },
+  { label: "Reported crashes",  value: "32",   sublabel: "~1 per 97K mi; 30 property damage only",  source: SOURCES.teslaRobotaxiSafety },
+  { label: "Injuries",          value: "0",    sublabel: "Tesla's human estimate: ~9.1",            source: SOURCES.teslaRobotaxiSafety },
 ];
 
 // ============================================================

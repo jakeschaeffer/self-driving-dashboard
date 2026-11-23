@@ -84,7 +84,8 @@ export default function Tesla() {
         </div>
         <Caveats items={[
           { text: "Owner-reported; skews optimistic.", source: SOURCES.teslaTracker },
-          { text: "Tesla collects this metric but doesn't publish it. No data yet for v14.3 or v15.", source: SOURCES.electrekFeedback },
+          { text: "Tesla collects this metric but doesn't publish it.", source: SOURCES.electrekFeedback },
+          { text: "v15 (Nov 2026): Tesla claims 25× fewer critical takeovers than v14; no baseline or data published.", source: SOURCES.teslaV15Notes },
           { text: "Tesla's “25,000 miles without touching the wheel” is one owner's streak, not a fleet rate.", source: SOURCES.streak25k },
           { text: "Target: Tesla AI chief's stated bar for unsupervised.", source: TESLA_UNSUPERVISED_TARGET.source },
         ]} />
@@ -108,8 +109,8 @@ export default function Tesla() {
         <StatCards stats={TESLA_ROBOTAXI_STATS.map((s) => ({ ...s, accent: VIZ.text }))} />
         <div style={{ marginTop: "-16px" }}>
           <Caveats items={[
-            { text: "Fleet counts are crowdsourced sightings; Tesla publishes none.", source: SOURCES.robotaxiTracker },
-            { text: "Crash rate uses data through Jan 2026, mostly with safety monitors aboard; no newer rate has been published.", source: SOURCES.fortune },
+            { text: "Tesla-reported. Injuries count only crashes the robotaxi started; the human estimate counts all.", source: SOURCES.teslaRobotaxiSafety },
+            { text: "Slow, geofenced driving: median crash speed 1 mph, none on highways.", source: SOURCES.electrekSgoNov },
           ]} />
         </div>
       </Section>
