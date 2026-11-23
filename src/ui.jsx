@@ -12,6 +12,21 @@ export const CARD = {
   borderRadius: "8px",
 };
 
+// Chart tokens. accent/compare were run through the dataviz palette validator
+// against the card surface (#121223): colorblind-safe pair, ≥3:1 contrast.
+// accent = the headline/Tesla-reported number; compare = independent checks.
+// Text never uses accent/compare — labels use text/secondary/muted.
+export const VIZ = {
+  accent: "#d97706",
+  compare: "#7c8798",
+  surface: "#121223",
+  grid: "rgba(255,255,255,0.06)",
+  axis: "rgba(255,255,255,0.16)",
+  text: "#e2e8f0",
+  secondary: "#94a3b8",
+  muted: "#8b95a7",
+};
+
 export const formatMiles = (n) => {
   if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 0 : 1) + "M";
   if (n >= 1000) return (n / 1000).toFixed(0) + "K";
@@ -66,6 +81,21 @@ export function Note({ children }) {
   );
 }
 
+// Short, sourced caveat lines under a chart. Lighter than a Note: one line
+// per caveat, muted ink. items: [{ text, source? }]
+export function Caveats({ items }) {
+  return (
+    <div style={{ display: "flex", gap: "10px", marginTop: "12px", fontSize: "11px", lineHeight: 1.6, color: VIZ.muted }}>
+      <div style={{ fontFamily: MONO, fontSize: "9px", letterSpacing: "0.08em", textTransform: "uppercase", paddingTop: "2px" }}>Caveats</div>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+        {items.map((c, i) => (
+          <li key={i}>{c.text} {c.source && <Src href={c.source.url}>{c.source.label}</Src>}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function StatCard({ label, value, sublabel, accent = "#60a5fa", source }) {
   return (
     <div style={{ ...CARD, padding: "18px 20px", flex: "1 1 180px", minWidth: "170px" }}>
@@ -104,36 +134,8 @@ export function Section({ title, subtitle, children }) {
 
 // ============================================================
 // CHARTS — small, dependency-free replacements for Recharts.
+// Newer interactive charts (tooltips, data tables) live in src/charts/.
 // ============================================================
-
-// Horizontal bar list: label | bar | value. Works down to 320px.
-// rows: { label, sub, display, pct, color }
-export function HBarList({ rows }) {
-  return (
-    <div style={{ ...CARD, display: "flex", flexDirection: "column", gap: "10px", padding: "16px 20px" }}>
-      {rows.map((r, i) => (
-        <div key={i} style={{
-          display: "grid", gridTemplateColumns: "60px 1fr 88px",
-          gap: "12px", alignItems: "center",
-        }}>
-          <div>
-            <div style={{ fontSize: "12px", color: "#cbd5e1", fontFamily: MONO, fontWeight: 600, lineHeight: 1.2 }}>{r.label}</div>
-            {r.sub && <div style={{ fontSize: "9px", color: "#4b5563", fontFamily: MONO, marginTop: "2px" }}>{r.sub}</div>}
-          </div>
-          <div style={{ position: "relative", height: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "6px", overflow: "hidden" }}>
-            <div style={{
-              position: "absolute", left: 0, top: 0, bottom: 0,
-              width: r.pct + "%", background: r.color, borderRadius: "6px",
-            }} />
-          </div>
-          <div style={{ textAlign: "right", fontFamily: MONO, fontSize: "12px", fontWeight: 700, color: r.color, whiteSpace: "nowrap" }}>
-            {r.display} <span style={{ color: "#4b5563", fontWeight: 500, fontSize: "10px" }}>mi</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // Column chart: one column per period, value label on top.
 // data: { label, value, display }
