@@ -79,6 +79,7 @@ The Tesla page is one chart (or tile row) per question, each followed by a `Cave
 
 - **`TESLA_VERSION_PROGRESS`** — crowdsourced miles per critical disengagement, `{ version, date: "YYYY Qn", milesPerIntervention }`. Plotted as the amber line in `LogTrendChart`. Add a row per new version; the chart, its "~N× gap" label and the data table all update.
 - **`TESLA_INDEPENDENT_TESTS`** — third-party tests (AMCI today), same shape plus `{ tester, source }`. Plotted as gray points.
+- **`TESLA_V15_CLAIM`** — v15's claimed multiplier vs. v14 (`{ version, date, multiplier, source }`). Drawn as a dashed bar in the "Improvement per version" chart, whose measured bars are computed from the first reading of each major version in `TESLA_VERSION_PROGRESS`.
 - **`TESLA_UNSUPERVISED_TARGET`** — `{ miles, label, source }`. The horizontal target line.
 - **`TESLA_FSD_COLLISIONS`** — Tesla's raw miles per major collision (FSD, manual with/without active safety, US average) plus `asOf`. Shown in the crash chart's data table.
 - **`TESLA_SAFETY_RATIOS`** — the bars in `RatioBars`: `{ label, sub, ratio, headline?, approx?, detail, source }`. Ratios built from `TESLA_FSD_COLLISIONS` are computed, so updating the raw miles is enough. `headline: true` draws the bar in amber.

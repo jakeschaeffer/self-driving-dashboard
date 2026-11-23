@@ -4,7 +4,7 @@
 // prediction track record.
 import { Fragment } from "react";
 import {
-  TESLA_VERSION_PROGRESS, TESLA_INDEPENDENT_TESTS, TESLA_UNSUPERVISED_TARGET,
+  TESLA_VERSION_PROGRESS, TESLA_INDEPENDENT_TESTS, TESLA_UNSUPERVISED_TARGET, TESLA_V15_CLAIM,
   TESLA_FSD_COLLISIONS, TESLA_SAFETY_RATIOS, TESLA_ROBOTAXI_STATS,
   MUSK_PREDICTIONS, SOURCES,
 } from "../../data.js";
@@ -47,6 +47,30 @@ const TREND_TABLE = [
   { who: "Target", version: "—", date: "—", miles: TESLA_UNSUPERVISED_TARGET.miles.toLocaleString() },
 ];
 
+// Improvement per major version: first reading of each major version vs. the
+// previous one, plus v15's claimed multiplier (drawn dashed — unverified).
+const major = (v) => v.split(".")[0];
+const FIRSTS = TESLA_VERSION_PROGRESS.filter((d, i, a) => i === 0 || major(d.version) !== major(a[i - 1].version));
+const times = (r) => `${Number(r.toPrecision(2))}×`;
+const JUMP_ROWS = [
+  ...FIRSTS.slice(1).map((d, i) => {
+    const prev = FIRSTS[i];
+    const ratio = d.milesPerIntervention / prev.milesPerIntervention;
+    return {
+      label: `${prev.version} → ${d.version}`, sub: `${prev.date} – ${d.date}, owner-reported`,
+      ratio, display: times(ratio), color: VIZ.accent,
+      detail: `${prev.milesPerIntervention.toLocaleString()} → ${d.milesPerIntervention.toLocaleString()} mi per critical takeover`,
+    };
+  }),
+  {
+    label: `${latest.version} → ${TESLA_V15_CLAIM.version}`, sub: "Tesla's claim, no baseline published",
+    ratio: TESLA_V15_CLAIM.multiplier, display: `${TESLA_V15_CLAIM.multiplier}×`, color: VIZ.accent, claim: true,
+    detail: "Release notes: critical intervention rate improved 25×",
+  },
+];
+const v15IfTrue = latest.milesPerIntervention * TESLA_V15_CLAIM.multiplier;
+const JUMP_TABLE = JUMP_ROWS.map((r) => ({ jump: r.label, ratio: r.display, basis: r.detail }));
+
 const RATIO_ROWS = TESLA_SAFETY_RATIOS.map((r) => ({
   ...r,
   display: r.approx ? `~${Math.round(r.ratio)}×` : `${r.ratio.toFixed(1)}×`,
@@ -88,6 +112,20 @@ export default function Tesla() {
           { text: "v15 (Nov 2026): Tesla claims 25× fewer critical takeovers than v14; no baseline or data published.", source: SOURCES.teslaV15Notes },
           { text: "Tesla's “25,000 miles without touching the wheel” is one owner's streak, not a fleet rate.", source: SOURCES.streak25k },
           { text: "Target: Tesla AI chief's stated bar for unsupervised.", source: TESLA_UNSUPERVISED_TARGET.source },
+        ]} />
+      </Section>
+
+      <Section title="Improvement per version" subtitle="How many times farther each major version went between critical takeovers.">
+        <div style={panel}>
+          <RatioBars rows={JUMP_ROWS} refLabel="1× = no improvement" />
+          <DataTable
+            columns={[{ key: "jump", label: "Version" }, { key: "ratio", label: "Gain", right: true }, { key: "basis", label: "Basis" }]}
+            rows={JUMP_TABLE}
+          />
+        </div>
+        <Caveats items={[
+          { text: "Measured gains use the first owner-reported reading of each major version; early readings are noisy.", source: SOURCES.teslaTracker },
+          { text: `v15's 25× is a claim. Applied to v14's ${latest.milesPerIntervention.toLocaleString()} mi it would be ~${Math.round(v15IfTrue / 1000)}K mi, still ~${Math.round(TESLA_UNSUPERVISED_TARGET.miles / v15IfTrue)}× short of the target.`, source: TESLA_V15_CLAIM.source },
         ]} />
       </Section>
 

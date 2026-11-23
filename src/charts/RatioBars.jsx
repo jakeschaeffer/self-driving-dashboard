@@ -2,13 +2,16 @@
 // comparisons, with a tick at 1× (no difference) through every bar.
 // Plain HTML rather than SVG so labels reflow naturally down to 320px.
 //
-// rows: [{ label, sub, ratio, display, color, detail }]
+// rows: [{ label, sub, ratio, display, color, detail, claim? }]
+//   claim: true draws a dashed outline instead of a fill — an unverified
+//   number, not a measurement.
+// refLabel: caption under the 1× tick.
 import { VIZ } from "../ui.jsx";
 import { useWidth, useTooltip, Tooltip } from "./parts.jsx";
 
 const VALUE_SPACE = 48; // px kept free right of the longest bar for its value
 
-export default function RatioBars({ rows }) {
+export default function RatioBars({ rows, refLabel = "1× = no safer" }) {
   const [ref, width] = useWidth();
   const { tip, bind } = useTooltip(ref);
   const max = Math.max(...rows.map((r) => r.ratio));
@@ -25,7 +28,8 @@ export default function RatioBars({ rows }) {
             <div style={{ position: "relative", height: "20px", marginTop: "6px" }}>
               <div {...bind({ id: r.label, value: r.display, label: r.detail })} style={{
                 position: "absolute", inset: "0 auto 0 0", width: pct(r.ratio),
-                background: r.color, borderRadius: "0 4px 4px 0", outline: "none",
+                background: r.claim ? "transparent" : r.color, borderRadius: "0 4px 4px 0", outline: "none",
+                border: r.claim ? `1.5px dashed ${r.color}` : "none", boxSizing: "border-box",
               }} />
               {/* 1× reference tick */}
               <div style={{ position: "absolute", left: pct(1), top: "-4px", bottom: "-4px", width: "1px", background: VIZ.text, opacity: 0.7, pointerEvents: "none" }} />
@@ -37,7 +41,7 @@ export default function RatioBars({ rows }) {
         ))}
         <div style={{ position: "relative", height: "14px", marginTop: "-12px" }}>
           <span style={{ position: "absolute", left: pct(1), fontSize: "10px", color: VIZ.muted, whiteSpace: "nowrap" }}>
-            1× = no safer
+            {refLabel}
           </span>
         </div>
       </div>

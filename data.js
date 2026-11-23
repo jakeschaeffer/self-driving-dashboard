@@ -310,6 +310,12 @@ export const TESLA_INDEPENDENT_TESTS = [
   { version: "v12.5", date: "2024 Q3", milesPerIntervention: 13, tester: "AMCI", source: SOURCES.electrekAmci },
 ];
 
+// v15's release-note claim: 25× better critical intervention rate vs. v14.
+// A multiplier only — Tesla published no baseline or miles.
+export const TESLA_V15_CLAIM = {
+  version: "v15", date: "2026 Q4", multiplier: 25, source: SOURCES.teslaV15Notes,
+};
+
 export const TESLA_UNSUPERVISED_TARGET = {
   miles: 670000,
   label: "Unsupervised target",
