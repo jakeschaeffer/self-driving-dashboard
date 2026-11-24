@@ -1,13 +1,49 @@
 // Road to Steeringless — reliability thresholds, regulatory barriers, timelines.
 import { TARGET_THRESHOLDS, REGULATORY_BARRIERS, EXPERT_TIMELINES, CHILD_SAFETY } from "../../data.js";
-import { MONO, CARD, formatMiles, Src, Section } from "../ui.jsx";
+import { CARD, VIZ, NUM, formatMiles, useNarrow, Src, Section } from "../ui.jsx";
 
-const yearsPerCrash = (miles, annual = 14000) => {
-  const y = miles / annual;
-  if (y >= 100) return Math.round(y) + " yrs";
-  if (y >= 1) return y.toFixed(1) + " yrs";
-  return (annual / miles).toFixed(1) + "x/yr";
-};
+// How many years one average driver (14,000 mi/yr) would go between events.
+const yearsPerDriver = (miles, annual = 14000) => Math.round(miles / annual).toLocaleString("en-US") + " yrs";
+
+// One threshold: the number on the left (stacked on top on phones), then
+// what it means and what backs it.
+function Threshold({ t, narrow }) {
+  const miles = formatMiles(t.miles) + " mi";
+  const years = yearsPerDriver(t.miles);
+  const source = (
+    <span style={{ fontSize: "11px", color: VIZ.secondary }}>
+      <span style={{ color: VIZ.muted }}>{t.source.kind}</span>{" "}
+      <Src href={t.source.url}>{narrow && t.source.short ? t.source.short : t.source.label}</Src>
+    </span>
+  );
+  const text = (
+    <>
+      <span style={{ fontSize: "13px", fontWeight: 600, color: VIZ.text }}>{t.label}</span>
+      <span style={{ fontSize: "11px", color: VIZ.muted }}>{t.description}</span>
+      {source}
+    </>
+  );
+  if (narrow) {
+    return (
+      <div style={{ ...CARD, padding: "14px 16px", display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "10px" }}>
+          <span style={{ fontSize: "22px", fontWeight: 600, lineHeight: 1, color: VIZ.text }}>{miles}</span>
+          <span style={{ fontSize: "11px", color: VIZ.muted, whiteSpace: "nowrap" }}>{years} / driver</span>
+        </div>
+        {text}
+      </div>
+    );
+  }
+  return (
+    <div style={{ ...CARD, padding: "14px 20px", display: "flex", alignItems: "center", gap: "16px" }}>
+      <div style={{ width: "160px", flexShrink: 0, display: "flex", flexDirection: "column", gap: "4px" }}>
+        <span style={{ fontSize: "24px", fontWeight: 600, lineHeight: 1, color: VIZ.text }}>{miles}</span>
+        <span style={{ fontSize: "11px", color: VIZ.muted }}>per event · {years} / driver</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>{text}</div>
+    </div>
+  );
+}
 
 const STATUS_COLORS = {
   achieved: { bg: "rgba(34,197,94,0.12)", fg: "#22c55e" },
@@ -16,25 +52,12 @@ const STATUS_COLORS = {
 };
 
 export default function Steeringless() {
+  const narrow = useNarrow();
   return (
     <div>
-      <Section title="How safe is safe enough?" subtitle="No regulator has published a threshold. These are inferred from expert commentary — each is miles between events.">
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {TARGET_THRESHOLDS.map((t, i) => (
-            <div key={i} style={{
-              ...CARD, border: "1px solid " + t.color + "20", borderLeft: "4px solid " + t.color,
-              display: "flex", alignItems: "center", gap: "16px", padding: "14px 18px",
-            }}>
-              <div style={{ minWidth: "96px" }}>
-                <div style={{ fontSize: "22px", fontWeight: 700, color: t.color, fontFamily: MONO, lineHeight: 1 }}>{formatMiles(Math.pow(10, t.nines))} mi</div>
-                <div style={{ fontSize: "9px", color: "#4b5563", marginTop: "4px" }}>per event · {yearsPerCrash(Math.pow(10, t.nines))} / driver</div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "#e2e8f0" }}>{t.label}</div>
-                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>{t.description}</div>
-              </div>
-            </div>
-          ))}
+      <Section title="How safe is safe enough?" subtitle="No regulator sets a number: UK and UN rules only require “at least as safe as a careful, competent driver.” Miles between events.">
+        <div style={{ display: "flex", flexDirection: "column", gap: narrow ? "8px" : "10px" }}>
+          {TARGET_THRESHOLDS.map((t) => <Threshold key={t.label} t={t} narrow={narrow} />)}
         </div>
       </Section>
 
@@ -46,9 +69,9 @@ export default function Steeringless() {
               <div key={i} style={{ ...CARD, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                   <div style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0" }}>{item.title}</div>
-                  <div style={{ fontSize: "8px", padding: "2px 7px", borderRadius: "10px", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", background: sc.bg, color: sc.fg }}>{item.status}</div>
+                  <div style={{ fontSize: "11px", padding: "1px 7px", borderRadius: "10px", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", background: sc.bg, color: sc.fg }}>{item.status}</div>
                 </div>
-                <div style={{ fontSize: "11px", color: "#64748b", lineHeight: 1.5, marginBottom: "6px" }}>{item.detail}</div>
+                <div style={{ fontSize: "11px", color: VIZ.muted, lineHeight: 1.5, marginBottom: "6px" }}>{item.detail}</div>
                 <Src href={item.source.url}>{item.source.label}</Src>
               </div>
             );
@@ -60,10 +83,10 @@ export default function Steeringless() {
         <div>
           {EXPERT_TIMELINES.map((item, i) => (
             <div key={i} style={{ display: "flex", gap: "14px", padding: "10px 0 10px 14px", borderLeft: "2px solid " + item.color + "30" }}>
-              <div style={{ minWidth: "70px", fontSize: "12px", fontWeight: 700, color: item.color, fontFamily: MONO }}>{item.year}</div>
+              <div style={{ minWidth: "70px", fontSize: "12px", fontWeight: 700, color: item.color, ...NUM }}>{item.year}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: "12px", color: "#e2e8f0" }}>{item.event}</div>
-                <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
+                <div style={{ fontSize: "11px", color: VIZ.muted, marginTop: "2px" }}>
                   {item.status}{" · "}<Src href={item.source.url}>{item.source.label}</Src>
                 </div>
               </div>

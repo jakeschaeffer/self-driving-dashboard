@@ -1,50 +1,64 @@
-// Horizontal bars for "N× farther between crashes" under different
-// comparisons, with a tick at 1× (no difference) through every bar.
-// Plain HTML rather than SVG so labels reflow naturally down to 320px.
+// Horizontal bars for "N× farther between events" under different
+// comparisons. Plain HTML rather than SVG so labels reflow down to 320px.
+// Bars only ever show improvements (every ratio is ≥1×), so there's no
+// "1× = no change" reference line.
+//
+// Desktop: label line, then the bar with its value at the tip.
+// Phone (<720px): label and value share a line, the bar goes underneath at
+// full width (a value at the tip would crowd the longest bar).
 //
 // rows: [{ label, sub, ratio, display, color, detail, claim? }]
-//   claim: true draws a dashed outline instead of a fill — an unverified
-//   number, not a measurement.
-// refLabel: caption under the 1× tick.
-import { VIZ } from "../ui.jsx";
+//   claim: true draws a dashed outline and a muted value instead of a solid
+//   bar: an unverified number, not a measurement.
+// valueSpace: px kept free right of the longest bar for its value (desktop).
+import { VIZ, NUM, useNarrow } from "../ui.jsx";
 import { useWidth, useTooltip, Tooltip } from "./parts.jsx";
 
-const VALUE_SPACE = 48; // px kept free right of the longest bar for its value
+const CLAIM_BORDER = "1px dashed rgba(217,119,6,0.6)";
 
-export default function RatioBars({ rows, refLabel = "1× = no safer" }) {
+export default function RatioBars({ rows, valueSpace = 48 }) {
+  const narrow = useNarrow();
   const [ref, width] = useWidth();
   const { tip, bind } = useTooltip(ref);
   const max = Math.max(...rows.map((r) => r.ratio));
   const pct = (v) => (v / max) * 100 + "%";
+  const value = (r) => ({
+    fontSize: "13px", whiteSpace: "nowrap", ...NUM,
+    fontWeight: r.claim ? 500 : 600, color: r.claim ? VIZ.muted : VIZ.text,
+  });
+  const bar = (r, height) => (
+    <div {...bind({ id: r.label, value: r.display, label: r.detail })} style={{
+      height, width: pct(r.ratio), boxSizing: "border-box", borderRadius: "0 4px 4px 0", outline: "none",
+      background: r.claim ? "transparent" : r.color, border: r.claim ? CLAIM_BORDER : "none",
+    }} />
+  );
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <div style={{ marginRight: VALUE_SPACE }}>
-        {rows.map((r) => (
-          <div key={r.label} style={{ marginBottom: "18px" }}>
-            <div style={{ fontSize: "12px", color: VIZ.text, lineHeight: 1.4 }}>
-              {r.label} <span style={{ fontSize: "11px", color: VIZ.muted }}>{r.sub}</span>
+    <div ref={ref} style={{ position: "relative", display: "flex", flexDirection: "column", gap: "16px", marginRight: narrow ? 0 : valueSpace }}>
+      {rows.map((r) => narrow ? (
+        <div key={r.label} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+              <span style={{ fontSize: "13px", color: VIZ.text }}>{r.label}</span>
+              <span style={{ fontSize: "11px", color: VIZ.muted }}>{r.sub}</span>
             </div>
-            <div style={{ position: "relative", height: "20px", marginTop: "6px" }}>
-              <div {...bind({ id: r.label, value: r.display, label: r.detail })} style={{
-                position: "absolute", inset: "0 auto 0 0", width: pct(r.ratio),
-                background: r.claim ? "transparent" : r.color, borderRadius: "0 4px 4px 0", outline: "none",
-                border: r.claim ? `1.5px dashed ${r.color}` : "none", boxSizing: "border-box",
-              }} />
-              {/* 1× reference tick */}
-              <div style={{ position: "absolute", left: pct(1), top: "-4px", bottom: "-4px", width: "1px", background: VIZ.text, opacity: 0.7, pointerEvents: "none" }} />
-              <div style={{ position: "absolute", left: `calc(${pct(r.ratio)} + 8px)`, lineHeight: "20px", fontSize: "13px", fontWeight: 600, color: VIZ.text, whiteSpace: "nowrap" }}>
-                {r.display}
-              </div>
-            </div>
+            <span style={value(r)}>{r.display}</span>
           </div>
-        ))}
-        <div style={{ position: "relative", height: "14px", marginTop: "-12px" }}>
-          <span style={{ position: "absolute", left: pct(1), fontSize: "10px", color: VIZ.muted, whiteSpace: "nowrap" }}>
-            {refLabel}
-          </span>
+          {bar(r, "16px")}
         </div>
-      </div>
+      ) : (
+        <div key={r.label} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span style={{ fontSize: "12px", color: VIZ.text }}>
+            {r.label} <span style={{ fontSize: "11px", color: VIZ.muted }}>{r.sub}</span>
+          </span>
+          <div style={{ position: "relative", height: "20px" }}>
+            {bar(r, "20px")}
+            <span style={{ ...value(r), position: "absolute", top: 0, left: `calc(${pct(r.ratio)} + 8px)`, lineHeight: "20px" }}>
+              {r.display}
+            </span>
+          </div>
+        </div>
+      ))}
       <Tooltip tip={tip} width={width} />
     </div>
   );

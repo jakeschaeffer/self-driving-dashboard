@@ -5,17 +5,26 @@
 // early versions flatten to zero and the target would sit off the chart.
 //
 // Props:
-//   series  [{ id, name, color, line, points: [{ x, y, value, label, direct? }] }]
+//   series  [{ id, name, color, shape, line, points: [{ x, y, value, label, direct? }] }]
+//           shape: "circle" (default) | "triangle" — matches the Legend
 //           x is a decimal year; direct = { text, side: "left" | "right" }
 //           prints a label beside that point (use sparingly).
 //   target  { y, label }       xDomain [x0, x1]   xTicks [{ x, label }]
 //   yDomain [lo, hi] — powers of ten
-import { MONO, BODY, VIZ, formatMiles } from "../ui.jsx";
+import { FONT, VIZ, formatMiles, useNarrow } from "../ui.jsx";
 import { useWidth, useTooltip, Tooltip } from "./parts.jsx";
 
-const M = { top: 12, right: 14, bottom: 26, left: 40 };
+// Phones get a taller plot (more room per decade) and tighter side margins.
+const MARGIN = { top: 12, right: 14, bottom: 26, left: 40 };
+const MARGIN_NARROW = { top: 12, right: 8, bottom: 22, left: 36 };
 
-export default function LogTrendChart({ series, target, xDomain, xTicks, yDomain, height = 200, ariaLabel }) {
+// Triangle centred on (x, y), same visual weight as the r=4 circle.
+const triangle = (x, y, k = 1) => `${x},${y - 6 * k} ${x + 5.5 * k},${y + 4 * k} ${x - 5.5 * k},${y + 4 * k}`;
+
+export default function LogTrendChart({ series, target, xDomain, xTicks, yDomain, ariaLabel }) {
+  const narrow = useNarrow();
+  const M = narrow ? MARGIN_NARROW : MARGIN;
+  const height = narrow ? 250 : 200;
   const [ref, width] = useWidth();
   const { tip, bind, isActive } = useTooltip(ref);
 
@@ -37,7 +46,7 @@ export default function LogTrendChart({ series, target, xDomain, xTicks, yDomain
   const gapMid = sy(Math.sqrt(lead.y * target.y)); // geometric midpoint on a log axis
   const right = width - M.right;
   const baseline = M.top + height;
-  const label = { fontFamily: BODY, fontSize: 11 };
+  const label = { fontFamily: FONT, fontSize: 11 };
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
@@ -46,13 +55,13 @@ export default function LogTrendChart({ series, target, xDomain, xTicks, yDomain
           {yTicks.map((v) => (
             <g key={v}>
               <line x1={M.left} x2={right} y1={sy(v)} y2={sy(v)} stroke={v === 10 ** l0 ? VIZ.axis : VIZ.grid} />
-              <text x={M.left - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize="10" fontFamily={MONO} fill={VIZ.muted}>
+              <text x={M.left - (narrow ? 6 : 8)} y={sy(v)} dy="0.32em" textAnchor="end" {...label} fill={VIZ.muted}>
                 {formatMiles(v).replace(".0", "")}
               </text>
             </g>
           ))}
           {xTicks.map((t) => (
-            <text key={t.label} x={sx(t.x)} y={baseline + 18} textAnchor="middle" fontSize="10" fontFamily={MONO} fill={VIZ.muted}>
+            <text key={t.label} x={sx(t.x)} y={baseline + (narrow ? 16 : 18)} textAnchor="middle" {...label} fill={VIZ.muted}>
               {t.label}
             </text>
           ))}
@@ -80,9 +89,11 @@ export default function LogTrendChart({ series, target, xDomain, xTicks, yDomain
             return (
               <g key={id} {...bind({ id, x: cx, y: cy - 6, value: p.value, label: p.label })} style={{ outline: "none" }}>
                 <circle cx={cx} cy={cy} r="12" fill="transparent" />
-                <circle cx={cx} cy={cy} r={isActive(id) ? 6 : 4} fill={s.color} stroke={VIZ.surface} strokeWidth="2" />
+                {s.shape === "triangle"
+                  ? <polygon points={triangle(cx, cy, isActive(id) ? 1.4 : 1)} fill={s.color} stroke={VIZ.surface} strokeWidth="2" strokeLinejoin="round" />
+                  : <circle cx={cx} cy={cy} r={isActive(id) ? 6 : 4} fill={s.color} stroke={VIZ.surface} strokeWidth="2" />}
                 {p.direct && (
-                  <text x={p.direct.side === "left" ? cx - 10 : cx + 10} y={p.direct.side === "left" ? cy - 8 : cy}
+                  <text x={p.direct.side === "left" ? cx - 10 : cx + 11} y={p.direct.side === "left" ? cy - 8 : cy}
                     dy="0.32em" textAnchor={p.direct.side === "left" ? "end" : "start"} {...label} fill={VIZ.text}>
                     {p.direct.text}
                   </text>

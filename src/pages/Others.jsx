@@ -1,6 +1,6 @@
 // Other Players — everyone beyond Waymo and Tesla, one row per company.
 import { OTHERS_STATS, OTHER_PLAYERS, SOURCES } from "../../data.js";
-import { MONO, CARD, useNarrow, Src, Note, StatCards, Section } from "../ui.jsx";
+import { NUM, CARD, useNarrow, Src, Note, StatCards, Section } from "../ui.jsx";
 
 const STATUS_CHIPS = {
   driverless: { bg: "rgba(34,197,94,0.12)", fg: "#22c55e", label: "driverless" },
@@ -31,16 +31,16 @@ export default function Others() {
                 </div>
                 <div style={{
                   justifySelf: "end", order: narrow ? 0 : 3,
-                  fontSize: "8px", padding: "2px 7px", borderRadius: "10px",
+                  fontSize: "11px", padding: "1px 7px", borderRadius: "10px",
                   textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em",
                   background: chip.bg, color: chip.fg, whiteSpace: "nowrap",
                 }}>{chip.label}</div>
-                <div style={{ gridColumn: narrow ? "1 / -1" : "auto", fontSize: "11px", color: "#64748b", lineHeight: 1.5 }}>
+                <div style={{ gridColumn: narrow ? "1 / -1" : "auto", fontSize: "11px", color: "#8b95a7", lineHeight: 1.5 }}>
                   {p.detail} <Src href={p.source.url}>{p.source.label}</Src>
                 </div>
                 <div style={{
                   gridColumn: narrow ? "1 / -1" : "auto",
-                  fontSize: "12px", fontWeight: 700, fontFamily: MONO,
+                  fontSize: "12px", fontWeight: 700, ...NUM,
                   color: p.status === "dead" ? "#4b5563" : chip.fg,
                   textAlign: narrow ? "left" : "right", whiteSpace: "nowrap",
                 }}>{p.scale}</div>

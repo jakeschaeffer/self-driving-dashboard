@@ -2,7 +2,7 @@
 
 The data this site shows lives in **`data.js`**. The dashboard imports from there and renders it. If you want to change a number, add a row, or swap a citation, that's the only file you need to touch — no JSX edits required for routine updates.
 
-The UI lives in `src/`: `src/App.jsx` (shell + hash-routed tab nav), `src/ui.jsx` (shared primitives, design tokens and the older chart components — no charting library), `src/charts/` (interactive SVG/HTML charts with hover tooltips and a collapsible data table), and one file per tab in `src/pages/`.
+The UI lives in `src/`: `src/App.jsx` (shell + hash-routed tab nav), `src/ui.jsx` (design tokens and shared primitives — no charting library), `src/charts/` (one file per chart: the safety ladder, trend line, ratio bars, Waymo miles timeline and severity cards, plus shared parts like the shape `Marker`, `Legend`, tooltip and collapsible data table), and one file per tab in `src/pages/`.
 
 This doc covers:
 1. [What's in `data.js`](#whats-in-datajs) — every export and what it powers
@@ -34,23 +34,17 @@ Each entry has `{ url, label, type }`, where `type` is one of:
 ### `PAGES`
 The five top-level tabs (Overview, Waymo, Tesla FSD, Others, Road to Steeringless). Each entry has `{ id, nav, title, sub }`. `nav` is the short label in the tab bar; `title` is the page heading; `sub` is the paragraph under the heading. Tabs are hash-routed (`#waymo`, `#tesla`, …) so they can be deep-linked.
 
-### `CAT_COLORS`
-Visual palette for the hero ladder. Three families (`tesla`, `waymo`, `human`), each an array of shades indexed by `intensity`. New rows in `NINES_SCALE_DATA` pick a color by `(category, intensity)`.
-
 ### `NINES_SCALE_DATA` — the hero ladder
 The main visualization on the landing page. Every row is one safety data point on the log scale of miles between events.
 
 Shape:
 ```js
 {
-  nines: 3.2,                    // log10(miles)
-  miles: 1454,                   // canonical number
+  miles: 1454,                   // miles between events; the ladder plots log10(miles)
   label: "Tesla FSD v14",        // system name
   sublabel: "Crowdsourced average",
   event: "disengagement",        // disengagement | crash | injury crash | serious injury | fatal crash
-  category: "tesla",             // tesla | waymo | human
-  intensity: 3,                  // index into CAT_COLORS[category]
-  isBaseline: true,              // optional — true for human rows
+  category: "tesla",             // tesla | waymo | human → marker shape + color
   source: SOURCES.teslaTracker,
 }
 ```
@@ -60,22 +54,22 @@ Shape:
 - `WAYMO_STATS` — Waymo deep dive
 - `TESLA_ROBOTAXI_STATS` — the robotaxi tiles on the Tesla page
 
-Shape: `{ label, value, sublabel, accent, source }`. `value` is a string (we keep formatting like `"50M mi"` or `"~460×"`).
+Shape: `{ label, value, sublabel, source }`. Values render in white; the label says what the number is. `value` is a string (we keep formatting like `"50M mi"` or `"~460×"`).
 
 ### `CRASH_RATES`
-Table on the Overview page (below the ladder). Every value is a string of miles between events; `waymoGood`/`teslaGood` flag whether each system outperforms the human average (`true` = green, `false` = amber/red, `null` = no comparable data, renders as em-dash).
+Table on the Overview page (below the ladder). Every value is a string of miles between events, or a footnoted zero (`"0 fatalities*"`, `"0 in 3.1M mi†"`) where there's no event to divide by; the footnotes themselves are written in `src/pages/Overview.jsx`. There's no better/worse coloring — readers compare the numbers.
 
 ### `WAYMO_CRASH_REDUCTION`
 By-severity comparison on the Waymo page. Numbers are incidents per million miles.
 
 ### `WAYMO_MILES_TIMELINE`
-Cumulative driverless miles by year (in millions). Drives the bar chart on the Waymo page.
+Cumulative driverless miles (in millions), `{ period, miles, t }`. `t` is the decimal year the total is as of (a year-end total sits at Jan 1 of the next year) and places the column on a true time axis, so uneven gaps between readings stay visible.
 
 ### `WAYMO_INCIDENTS`
 Known limitations and incidents. `severity` is `"high" | "medium" | "info"`. `source` is optional — the two "Ongoing" entries don't cite a single article.
 
 ### Tesla page
-The Tesla page is one chart (or tile row) per question, each followed by a `Caveats` list. Tesla-reported and crowdsourced numbers are drawn in the amber accent; independent or like-for-like checks are drawn in gray.
+The Tesla page is one chart (or tile row) per question, each followed by a `Caveats` list. Tesla-reported and crowdsourced numbers are drawn in the amber accent with circle markers; independent or like-for-like checks are drawn in gray (triangle markers on the trend chart).
 
 - **`TESLA_VERSION_PROGRESS`** — crowdsourced miles per critical disengagement, `{ version, date: "YYYY Qn", milesPerIntervention }`. Plotted as the amber line in `LogTrendChart`. Add a row per new version; the chart, its "~N× gap" label and the data table all update.
 - **`TESLA_INDEPENDENT_TESTS`** — third-party tests (AMCI today), same shape plus `{ tester, source }`. Plotted as gray points.
@@ -89,7 +83,7 @@ The Tesla page is one chart (or tile row) per question, each followed by a `Cave
 Track record of public claims vs. what shipped. `{ year, claim, result, source }`.
 
 ### `TARGET_THRESHOLDS`
-The "How safe is safe enough?" block on the Road to Steeringless page. `{ nines, label, description, color }`. The miles-per-event value is computed as `10^nines` so updating `nines` is enough.
+The "How safe is safe enough?" block on the Road to Steeringless page. `{ miles, label, description, source: { kind, label, short?, url } }`. No regulator publishes a number, so every row says what backs it: `kind` is `"Source:"` for a published figure, or an `"Illustrative…"` note followed by the closest context we can cite. `short` is an optional shorter link label for phones. Years-per-driver is computed at 14,000 mi/yr.
 
 ### `REGULATORY_BARRIERS`
 Non-technical blockers. `status` is `"achieved" | "partial" | "blocked"` and drives the chip color.
@@ -126,14 +120,14 @@ When you're adding a row, ask: would I want my reader to see this number with th
 
 ### Updating a single number (e.g. Tesla FSD v14 → v14.3 release)
 1. Find the row in `data.js`. For the home/ladder, that's `NINES_SCALE_DATA`. For the Tesla page version chart, add a row to `TESLA_VERSION_PROGRESS`. For stat cards, the corresponding `*_STATS` array.
-2. On the ladder, change `miles`, `nines` (= `Math.log10(miles)` rounded to one decimal), and `label`/`sublabel` if the version changed. (The Tesla chart computes its own log scale — just `milesPerIntervention`.)
+2. On the ladder, change `miles`, and `label`/`sublabel` if the version changed. (The Tesla chart computes its own log scale — just `milesPerIntervention`.)
 3. Bump `SITE.lastUpdated`.
 4. Visually verify all five tabs at desktop and 320px mobile.
 
 ### Adding a brand-new row to the ladder
 For a data point we haven't tracked before (e.g. a Cruise number, or a new Waymo metric):
 
-1. Pick the `category` (`tesla` | `waymo` | `human`) and an `intensity` index. Intensity is just an index into `CAT_COLORS[category]` — if you add a row that needs a fresh shade, append a new color to that array. Existing rows pick their colors automatically.
+1. Pick the `category` (`tesla` | `waymo` | `human`). It sets the row's marker shape and color; a new family needs a new entry in `FAMILY` in `src/charts/SafetyLadder.jsx`, with its own shape.
 2. Add the source to `SOURCES` if it isn't already there. Use a key that describes the source (`waymoSafety`, not `waymoLink`).
 3. Add the row to `NINES_SCALE_DATA`. Sort order in the array doesn't matter — the ladder sorts safest-first at render time.
 4. Decide if the row deserves a stat-card spot. If yes, also update `HOME_STATS` (or the relevant page's stats).
@@ -176,7 +170,7 @@ If you have data that genuinely doesn't fit (e.g. a per-state regulatory map, a 
 3. Render it. Keep the shape simple — `{ label, value, source }` is fine for most lists.
 4. Add the new shape to "What's in `data.js`" above so the next person knows it exists.
 
-The dashboard does NOT enforce any particular shape; the structured data file is a **convention, not a schema**. If a shape is the wrong fit for a new piece of data, change it. The hero/ladder is the only data set with a fixed contract (the chart math depends on `nines`, `category`, `intensity`).
+The dashboard does NOT enforce any particular shape; the structured data file is a **convention, not a schema**. If a shape is the wrong fit for a new piece of data, change it. The hero/ladder is the only data set with a fixed contract (the chart math depends on `miles`, `event` and `category`).
 
 ### When NOT to add data
 - **Numbers without a source.** Always include a citation, even if it's a press article that summarizes the underlying study.
@@ -195,3 +189,16 @@ Some content lives in the JSX, not `data.js`, because it's prose-shaped rather t
 - **Section titles and subtitles** for the in-page `<Section>` blocks. Page-level titles are in `PAGES` in data.js; section-level subtitles are still inline in `src/pages/*.jsx`.
 
 If you're updating a key Overview number (Tesla FSD best, human baseline, gap multiplier), search `src/pages/` for the value as well — the key-insight callout and the crash-table footnote use the same numbers.
+
+---
+
+## Design rules
+
+These were settled on the design canvas and apply to every chart:
+
+- **Shapes, not just colors, tell series apart** (accessibility). Tesla / owner-reported = circle, Waymo = square, human drivers = diamond, independent test = triangle. Use `Marker` and `Legend` from `src/charts/parts.jsx`; every multi-series chart gets a legend showing the shapes.
+- **No good/bad coloring of values.** Numbers are white; readers judge better or worse. (The ladder's "N× safer/worse" column and Waymo's "↓ N% fewer" are the exceptions, and both spell it out in words.)
+- **No reference lines that don't carry information** — e.g. no "1× = no change" tick when every bar is an improvement.
+- **One typeface:** IBM Plex Sans, no mono fonts. Tabular figures (`NUM`) only where numbers line up in a column. Minimum text size 11px.
+- **Takeovers = crashes.** A critical takeover counts as crash-equivalent, so disengagement rates are compared with the human crash rate. Multipliers are rounded to two significant figures.
+- **Phones:** every chart has a layout for widths under 720px (`useNarrow`). Check 375px and 320px with no sideways scroll.

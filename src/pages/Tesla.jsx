@@ -8,7 +8,7 @@ import {
   TESLA_FSD_COLLISIONS, TESLA_SAFETY_RATIOS, TESLA_ROBOTAXI_STATS,
   MUSK_PREDICTIONS, SOURCES,
 } from "../../data.js";
-import { MONO, CARD, VIZ, Src, Caveats, StatCards, Section } from "../ui.jsx";
+import { CARD, VIZ, NUM, useNarrow, Src, Caveats, StatCards, Section } from "../ui.jsx";
 import { Legend, DataTable } from "../charts/parts.jsx";
 import LogTrendChart from "../charts/LogTrendChart.jsx";
 import RatioBars from "../charts/RatioBars.jsx";
@@ -24,7 +24,7 @@ const latest = TESLA_VERSION_PROGRESS[TESLA_VERSION_PROGRESS.length - 1];
 
 const TREND_SERIES = [
   {
-    id: "crowd", name: "Owner-reported", color: VIZ.accent, line: true,
+    id: "crowd", name: "Owner-reported", color: VIZ.accent, shape: "circle", line: true,
     points: TESLA_VERSION_PROGRESS.map((d) => ({
       x: quarterMid(d.date), y: d.milesPerIntervention,
       value: miles(d.milesPerIntervention), label: `${d.version} · ${d.date} · owner-reported`,
@@ -32,7 +32,7 @@ const TREND_SERIES = [
     })),
   },
   {
-    id: "independent", name: "Independent test", color: VIZ.compare, line: false,
+    id: "independent", name: "Independent test", color: VIZ.compare, shape: "triangle", line: false,
     points: TESLA_INDEPENDENT_TESTS.map((d) => ({
       x: quarterMid(d.date), y: d.milesPerIntervention,
       value: miles(d.milesPerIntervention), label: `${d.version} · ${d.date} · ${d.tester} test`,
@@ -64,7 +64,7 @@ const JUMP_ROWS = [
   }),
   {
     label: `${latest.version} → ${TESLA_V15_CLAIM.version}`, sub: "Tesla's claim, no baseline published",
-    ratio: TESLA_V15_CLAIM.multiplier, display: `${TESLA_V15_CLAIM.multiplier}×`, color: VIZ.accent, claim: true,
+    ratio: TESLA_V15_CLAIM.multiplier, display: `${TESLA_V15_CLAIM.multiplier}× (claimed)`, color: VIZ.accent, claim: true,
     detail: "Release notes: critical intervention rate improved 25×",
   },
 ];
@@ -85,14 +85,14 @@ const COLLISION_TABLE = [
   { mode: "US average",                miles: C.usAverage },
 ].map((r) => ({ ...r, miles: r.miles.toLocaleString() }));
 
-const panel = { ...CARD, padding: "18px 20px 14px" };
-
 export default function Tesla() {
+  const narrow = useNarrow();
+  const panel = { ...CARD, padding: narrow ? "16px" : "18px 20px 14px" };
   return (
     <div>
       <Section title="Disengagements" subtitle="Miles between critical takeovers on supervised FSD. Log scale.">
         <div style={panel}>
-          <Legend items={TREND_SERIES.map((s) => ({ label: s.name, color: s.color }))} />
+          <Legend items={TREND_SERIES.map((s) => ({ label: s.name, color: s.color, shape: s.shape }))} />
           <LogTrendChart
             series={TREND_SERIES}
             target={{ y: TESLA_UNSUPERVISED_TARGET.miles, label: TESLA_UNSUPERVISED_TARGET.label }}
@@ -117,7 +117,7 @@ export default function Tesla() {
 
       <Section title="Improvement per version" subtitle="How many times farther each major version went between critical takeovers.">
         <div style={panel}>
-          <RatioBars rows={JUMP_ROWS} refLabel="1× = no improvement" />
+          <RatioBars rows={JUMP_ROWS} valueSpace={100} />
           <DataTable
             columns={[{ key: "jump", label: "Version" }, { key: "ratio", label: "Gain", right: true }, { key: "basis", label: "Basis" }]}
             rows={JUMP_TABLE}
@@ -144,7 +144,7 @@ export default function Tesla() {
       </Section>
 
       <Section title="Robotaxi" subtitle="Unsupervised service.">
-        <StatCards stats={TESLA_ROBOTAXI_STATS.map((s) => ({ ...s, accent: VIZ.text }))} />
+        <StatCards stats={TESLA_ROBOTAXI_STATS} />
         <div style={{ marginTop: "-16px" }}>
           <Caveats items={[
             { text: "Tesla-reported. Injuries count only crashes the robotaxi started; the human estimate counts all.", source: SOURCES.teslaRobotaxiSafety },
@@ -157,7 +157,7 @@ export default function Tesla() {
         <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: "12px 14px", marginTop: "16px" }}>
           {MUSK_PREDICTIONS.map((p, i) => (
             <Fragment key={i}>
-              <div style={{ fontFamily: MONO, fontSize: "11px", color: VIZ.muted, paddingTop: "1px" }}>{p.year}</div>
+              <div style={{ fontSize: "11px", color: VIZ.muted, paddingTop: "1px", ...NUM }}>{p.year}</div>
               <div>
                 <div style={{ fontSize: "12px", color: VIZ.text }}>{p.claim}</div>
                 <div style={{ fontSize: "11px", color: VIZ.secondary, marginTop: "2px" }}>{p.result} <Src href={p.source.url}>{p.source.label}</Src></div>

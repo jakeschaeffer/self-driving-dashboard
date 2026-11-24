@@ -141,63 +141,37 @@ export const PAGES = [
 ];
 
 // ============================================================
-// COLORS — harmonized palette for the three families on the
-// hero/ladder. Each row in NINES_SCALE_DATA picks a shade by
-// (category, intensity).
-// ============================================================
-
-export const CAT_COLORS = {
-  tesla: [
-    "oklch(0.62 0.17 40)",   // intensity 0 — v12.5 AMCI
-    "oklch(0.68 0.16 50)",   // 1 — v12.5 crowd
-    "oklch(0.74 0.15 60)",   // 2 — v13
-    "oklch(0.80 0.14 75)",   // 3 — v14
-    "oklch(0.72 0.16 55)",   // 4 — Robotaxi
-  ],
-  waymo: [
-    "oklch(0.70 0.14 240)",  // 0 — testing
-    "oklch(0.64 0.16 245)",  // 1 — injury
-    "oklch(0.56 0.17 250)",  // 2 — serious injury
-  ],
-  human: [
-    "oklch(0.70 0.02 260)",  // 0 — avg
-    "oklch(0.55 0.02 260)",  // 1 — fatal
-  ],
-};
-
-// ============================================================
 // NINES_SCALE_DATA — the hero ladder. Every row is one safety
 // data point plotted on a log scale of miles between events.
 //
 // Shape per row:
-//   nines       — log10(miles), e.g. miles=1454 → nines≈3.16
-//   miles       — miles between events (the canonical number)
+//   miles       — miles between events (the canonical number; the
+//                 ladder plots log10(miles), the "nines")
 //   label       — system name shown in the row (e.g. "Tesla FSD v14")
 //   sublabel    — short context line (e.g. "Crowdsourced average")
 //   event       — what one tick means: "disengagement" | "crash" |
 //                 "injury crash" | "serious injury" | "fatal crash"
-//   category    — "tesla" | "waymo" | "human" — picks color family
-//   intensity   — index into CAT_COLORS[category]
-//   isBaseline  — optional; true for Human Average / Human Fatal
+//   category    — "tesla" | "waymo" | "human" — picks the marker
+//                 shape (circle / square / diamond) and color
 //   source      — SOURCES.x reference or inline { url, label }
+//
+// Editorial rule: a critical takeover counts as crash-equivalent (each
+// is a crash the driver had to prevent), so disengagement rows are
+// compared with the human crash rate like any other row.
 // ============================================================
 
 export const NINES_SCALE_DATA = [
-  { nines: 1.1, miles: 13,         label: "Tesla FSD v12.5", sublabel: "AMCI independent test",       event: "disengagement",  category: "tesla", intensity: 0, source: SOURCES.electrekAmci },
-  { nines: 2.3, miles: 183,        label: "Tesla FSD v12.5", sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 1, source: SOURCES.teslaTracker },
-  { nines: 2.7, miles: 493,        label: "Tesla FSD v13",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 2, source: SOURCES.teslaTracker },
-  { nines: 3.2, miles: 1454,       label: "Tesla FSD v14",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", intensity: 3, source: SOURCES.teslaTracker },
-  { nines: 4.5, miles: 29000,      label: "Waymo (testing)", sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", intensity: 0, source: SOURCES.caDmv },
-  { nines: 4.8, miles: 57000,      label: "Tesla Robotaxi",  sublabel: "Austin crash rate",           event: "crash",          category: "tesla", intensity: 4, source: SOURCES.fortune },
-  { nines: 5.7, miles: 529000,     label: "Human Average",   sublabel: "All police-reported crashes", event: "crash",          category: "human", intensity: 0, isBaseline: true, source: SOURCES.nhtsa },
-  { nines: 6.1, miles: 1350000,    label: "Waymo",           sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", intensity: 1, source: SOURCES.kusano2025 },
-  { nines: 7.7, miles: 50000000,   label: "Waymo",           sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", intensity: 2, source: SOURCES.waymoSafety },
-  { nines: 7.9, miles: 86000000,   label: "Human Fatal",     sublabel: "Fatal crash rate only",       event: "fatal crash",    category: "human", intensity: 1, isBaseline: true, source: SOURCES.nhtsa },
+  { miles: 13,       label: "Tesla FSD v12.5", sublabel: "AMCI independent test",       event: "disengagement",  category: "tesla", source: SOURCES.electrekAmci },
+  { miles: 183,      label: "Tesla FSD v12.5", sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
+  { miles: 493,      label: "Tesla FSD v13",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
+  { miles: 1454,     label: "Tesla FSD v14",   sublabel: "Crowdsourced average",        event: "disengagement",  category: "tesla", source: SOURCES.teslaTracker },
+  { miles: 29000,    label: "Waymo (testing)", sublabel: "CA DMV disengagements",       event: "disengagement",  category: "waymo", source: SOURCES.caDmv },
+  { miles: 97000,    label: "Tesla Robotaxi",  sublabel: "Crash rate, Jan–Oct 2026",    event: "crash",          category: "tesla", source: SOURCES.teslaRobotaxiSafety },
+  { miles: 529000,   label: "Human average",   sublabel: "All police-reported crashes", event: "crash",          category: "human", source: SOURCES.nhtsa },
+  { miles: 1350000,  label: "Waymo",           sublabel: "Injury crash rate",           event: "injury crash",   category: "waymo", source: SOURCES.kusano2025 },
+  { miles: 50000000, label: "Waymo",           sublabel: "Serious injury crash rate",   event: "serious injury", category: "waymo", source: SOURCES.waymoSafety },
+  { miles: 86000000, label: "Human fatal",     sublabel: "Fatal crash rate only",       event: "fatal crash",    category: "human", source: SOURCES.nhtsa },
 ];
-
-// Resolve color from (category, intensity) — done once at module load so the UI
-// can read d.color directly. New rows added below will pick up colors automatically.
-NINES_SCALE_DATA.forEach(function(d) { d.color = CAT_COLORS[d.category][d.intensity]; });
 
 // ============================================================
 // STATS — the four "headline" stat cards on each page.
@@ -206,44 +180,43 @@ NINES_SCALE_DATA.forEach(function(d) { d.color = CAT_COLORS[d.category][d.intens
 //   label    — small uppercase title
 //   value    — big number (string — keep formatting like "50M mi" or "1,454")
 //   sublabel — one-line context
-//   accent   — color for the value
 //   source   — SOURCES.x or inline { url, label }
 // ============================================================
 
 export const HOME_STATS = [
-  { label: "Waymo best",                   value: "50M mi",   sublabel: "per serious injury crash",       accent: "#3b82f6", source: SOURCES.waymoSafety },
-  { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement",     accent: "#f59e0b", source: SOURCES.teslaTracker },
-  { label: "Human baseline",               value: "529K mi",  sublabel: "per police-reported crash",      accent: "#a3a3a3", source: SOURCES.nhtsa },
-  { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "vs. Elluswamy 670K mi target",   accent: "#ef4444", source: SOURCES.electrekMusk },
+  { label: "Waymo best",                   value: "50M mi",   sublabel: "per serious injury crash", source: SOURCES.waymoSafety },
+  { label: "Tesla FSD v14",                value: "1,454 mi", sublabel: "per critical disengagement", source: SOURCES.teslaTracker },
+  { label: "Human baseline",               value: "529K mi",  sublabel: "per police-reported crash", source: SOURCES.nhtsa },
+  { label: "Gap: Tesla to unsupervised",   value: "~460×",    sublabel: "vs. Elluswamy 670K mi target", source: SOURCES.electrekMusk },
 ];
 
 export const WAYMO_STATS = [
-  { label: "Driverless miles",             value: "220M+",  sublabel: "Rider-only, through Mar 2026",  accent: "#3b82f6", source: SOURCES.waymoSafety },
-  { label: "Weekly rides",                 value: "500K",   sublabel: "Target: 1M/week by end of 2026", accent: "#60a5fa", source: SOURCES.alphabetQ1 },
-  { label: "Safety vs humans",             value: "↓94%",   sublabel: "Fewer serious-injury crashes",  accent: "#22c55e", source: SOURCES.waymoSafety },
-  { label: "Cities",                       value: "11",     sublabel: "1,400+ sq mi service area",     accent: "#8b5cf6", source: SOURCES.electrekWaymo1400 },
+  { label: "Driverless miles",             value: "220M+",  sublabel: "Rider-only, through Mar 2026", source: SOURCES.waymoSafety },
+  { label: "Weekly rides",                 value: "500K",   sublabel: "Target: 1M/week by end of 2026", source: SOURCES.alphabetQ1 },
+  { label: "Safety vs humans",             value: "↓94%",   sublabel: "Fewer serious-injury crashes", source: SOURCES.waymoSafety },
+  { label: "Cities",                       value: "11",     sublabel: "1,400+ sq mi service area", source: SOURCES.electrekWaymo1400 },
 ];
 
 // ============================================================
-// CRASH_RATES — table on the AV vs Humans page.
+// CRASH_RATES — table under the ladder on the Overview page.
 //
 // All values are miles between events. Strings (not numbers) so we can show
-// approximate values like "~5M" or "0 fatalities*".
-//
-// goodFlag: true = outperforming human average (green), false = worse (amber/red),
-//           null = no comparable data ("—")
+// approximate values like "~5M", or "0 fatalities*" / "0 in 3.1M mi†"
+// where there's no event to divide by. The * and † footnotes are written
+// next to the table in src/pages/Overview.jsx. No better/worse coloring:
+// the reader compares the numbers.
 // ============================================================
 
 export const CRASH_RATES = [
-  { metric: "Police-reported crash", human: "529K", waymo: "~476K",         tesla: "~57K",     waymoGood: false, teslaGood: false, source: SOURCES.nhtsa },
-  { metric: "Injury crash",          human: "252K", waymo: "1.35M",         tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.kusano2025 },
-  { metric: "Serious injury crash",  human: "~5M",  waymo: "50M",           tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.waymoSafety },
-  { metric: "Fatal crash",           human: "86M",  waymo: "0 fatalities*", tesla: "—",        waymoGood: true,  teslaGood: null,  source: SOURCES.nhtsa },
+  { metric: "Police-reported crash", human: "529K", waymo: "~476K",         tesla: "~97K",          source: SOURCES.nhtsa },
+  { metric: "Injury crash",          human: "252K", waymo: "1.35M",         tesla: "0 in 3.1M mi†", source: SOURCES.kusano2025 },
+  { metric: "Serious injury crash",  human: "~5M",  waymo: "50M",           tesla: "0 in 3.1M mi†", source: SOURCES.waymoSafety },
+  { metric: "Fatal crash",           human: "86M",  waymo: "0 fatalities*", tesla: "0 in 3.1M mi†", source: SOURCES.nhtsa },
 ];
 
 // ============================================================
 // WAYMO_CRASH_REDUCTION — by severity, for the Waymo & Comparison pages.
-// Numbers are incidents per million miles.
+// Numbers are incidents per million miles. short = optional phone label.
 // ============================================================
 
 export const WAYMO_CRASH_REDUCTION = [
@@ -252,21 +225,23 @@ export const WAYMO_CRASH_REDUCTION = [
   { category: "Airbag deploy",           waymo: 0.26, human: 1.44, reduction: 82 },
   { category: "Pedestrian injury",       waymo: 0.05, human: 0.59, reduction: 92 },
   { category: "Cyclist injury",          waymo: 0.03, human: 0.18, reduction: 83 },
-  { category: "Property dmg (Swiss Re)", waymo: 0.36, human: 3.08, reduction: 88 },
+  { category: "Property dmg (Swiss Re)", short: "Property damage", waymo: 0.36, human: 3.08, reduction: 88 },
 ];
 
 // ============================================================
-// WAYMO_MILES_TIMELINE — cumulative driverless miles by year (in millions).
+// WAYMO_MILES_TIMELINE — cumulative driverless miles (in millions).
+// t = decimal year the total is "as of" (a year-end total sits at Jan 1 of
+// the next year); it places the column on a true time axis.
 // ============================================================
 
 export const WAYMO_MILES_TIMELINE = [
-  { period: "2020",     miles: 6 },
-  { period: "2021",     miles: 10 },
-  { period: "2022",     miles: 20 },
-  { period: "2023",     miles: 35 },
-  { period: "2024",     miles: 60 },
-  { period: "Sep 2025", miles: 127 },
-  { period: "Mar 2026", miles: 221 },
+  { period: "2020",     miles: 6,   t: 2021 },
+  { period: "2021",     miles: 10,  t: 2022 },
+  { period: "2022",     miles: 20,  t: 2023 },
+  { period: "2023",     miles: 35,  t: 2024 },
+  { period: "2024",     miles: 60,  t: 2025 },
+  { period: "Sep 2025", miles: 127, t: 2025.7 },
+  { period: "Mar 2026", miles: 221, t: 2026.2 },
 ];
 
 // ============================================================
@@ -362,7 +337,7 @@ export const TESLA_SAFETY_RATIOS = [
 
 export const TESLA_ROBOTAXI_STATS = [
   { label: "Driverless miles",  value: "3.1M", sublabel: "No safety monitor, Jan 22 – Oct 18, 2026", source: SOURCES.teslaRobotaxiSafety },
-  { label: "Reported crashes",  value: "32",   sublabel: "~1 per 97K mi; 30 property damage only",  source: SOURCES.teslaRobotaxiSafety },
+  { label: "Reported crashes",  value: "32",   sublabel: "~1 per 97K mi, Jan – Oct 2026; 30 minor",  source: SOURCES.teslaRobotaxiSafety },
   { label: "Injuries",          value: "0",    sublabel: "Tesla's human estimate: ~9.1",            source: SOURCES.teslaRobotaxiSafety },
 ];
 
@@ -381,17 +356,22 @@ export const MUSK_PREDICTIONS = [
 ];
 
 // ============================================================
-// TARGET_THRESHOLDS — Road to Steeringless reliability targets.
+// TARGET_THRESHOLDS — "How safe is safe enough?" on the Steeringless page.
 //
-// nines = log10(miles per event). 5.7 = human average crash rate.
-// description is the rationale; color is the left-border accent.
+// miles = miles between events. No regulator publishes a number, so each
+// row says what backs it: source.kind is "Source:" for a published figure,
+// or an "Illustrative…" note plus the closest context we could cite.
 // ============================================================
 
 export const TARGET_THRESHOLDS = [
-  { nines: 5.7, label: "Match human average",   description: "System matches avg human crash rate",                                            color: "#fbbf24" },
-  { nines: 6.5, label: "Regulatory confidence", description: "~5x better than humans — likely threshold for unsupervised permits",             color: "#22c55e" },
-  { nines: 7.0, label: "Remove steering wheel", description: "~20x better than humans — plausible threshold for steeringless mass-market",     color: "#3b82f6" },
-  { nines: 7.5, label: "Child safety threshold", description: "~50x better than humans — trust a child alone in the vehicle",                   color: "#a855f7" },
+  { miles: 529000,   label: "Match human average",    description: "Average US rate of police-reported crashes",
+    source: { kind: "Source:", label: "NHTSA", url: SOURCES.nhtsa.url } },
+  { miles: 2645000,  label: "Public tolerable risk",  description: "~5× better than humans: the risk most people say they would accept",
+    source: { kind: "Source:", label: "Liu, Yang & Xu 2019, Risk Analysis (4–5×; replicated 2020)", short: "Liu, Yang & Xu 2019 (4–5×; replicated 2020)", url: "https://pubmed.ncbi.nlm.nih.gov/29783277" } },
+  { miles: 10000000, label: "Remove steering wheel",  description: "~20× better than humans: plausible bar for steeringless mass-market cars",
+    source: { kind: "Illustrative, no published threshold. Context:", label: "UK AV Act 2024 requires only “careful and competent”", short: "UK AV Act 2024", url: "https://www.legislation.gov.uk/ukpga/2024/10" } },
+  { miles: 31600000, label: "Child safety threshold", description: "~50× better than humans: trust a child alone in the vehicle",
+    source: { kind: "Illustrative. Context: only 21% of parents would let a child ride alone —", label: "CHOP 2020", url: SOURCES.chop.url } },
 ];
 
 // ============================================================
@@ -451,10 +431,10 @@ export const CHILD_SAFETY = {
 // ============================================================
 
 export const OTHERS_STATS = [
-  { label: "Apollo Go rides",      value: "22M+",   sublabel: "Cumulative, 27 cities worldwide",     accent: "#22d3ee", source: SOURCES.baiduIr },
-  { label: "Pony.ai fleet",        value: "1,700+", sublabel: "Targeting 3,500+ by end of 2026",     accent: "#a78bfa", source: SOURCES.ponyIr },
-  { label: "Aurora truck miles",   value: "250K+",  sublabel: "Driverless, zero at-fault collisions", accent: "#34d399", source: SOURCES.auroraIr },
-  { label: "Zoox cities",          value: "2",      sublabel: "Las Vegas & SF; Miami, Austin next",  accent: "#f472b6", source: SOURCES.electrekZoox },
+  { label: "Apollo Go rides",      value: "22M+",   sublabel: "Cumulative, 27 cities worldwide", source: SOURCES.baiduIr },
+  { label: "Pony.ai fleet",        value: "1,700+", sublabel: "Targeting 3,500+ by end of 2026", source: SOURCES.ponyIr },
+  { label: "Aurora truck miles",   value: "250K+",  sublabel: "Driverless, zero at-fault collisions", source: SOURCES.auroraIr },
+  { label: "Zoox cities",          value: "2",      sublabel: "Las Vegas & SF; Miami, Austin next", source: SOURCES.electrekZoox },
 ];
 
 export const OTHER_PLAYERS = [
